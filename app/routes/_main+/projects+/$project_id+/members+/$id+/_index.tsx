@@ -1,0 +1,103 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { AppPreloader } from '@/components/misc/AppPreloader'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { fetchApi } from '@/libraries/fetch'
+import { IMembership } from '@/types/invitation'
+import { useAuth0 } from '@auth0/auth0-react'
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { format } from 'date-fns'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+
+export function loader() {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+
+  return { apiUrl, nodeEnv }
+}
+
+export default function ProjectMemberDetail() {
+  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { getAccessTokenSilently } = useAuth0()
+  const params = useParams()
+  const navigate = useNavigate()
+  const [member, setMember] = useState<IMembership>()
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+
+  const fetchInvitation = async () => {
+    setIsLoading(true)
+
+    try {
+      const token = await getAccessTokenSilently()
+      const response = await fetchApi(
+        `${apiUrl}/projects/${params.project_id}/memberships/${params.id}`,
+        token,
+        nodeEnv,
+      )
+
+      setMember(response)
+    } catch (error: any) {
+      const convertError = JSON.parse(error?.message)
+      toast.error(`${convertError.status} - ${convertError.error}`)
+    }
+
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchInvitation()
+  }, [])
+
+  if (isLoading) return <AppPreloader />
+
+  return (
+    <div className="content-center">
+      <Card className="card-center">
+        <CardHeader>
+          <CardTitle>Membership Detail</CardTitle>
+        </CardHeader>
+        <CardContent className="px-6">
+          <div className="d-list">
+            <div className="d-item">
+              <dt className="d-label">Name</dt>
+              <dd className="d-content space-x-2">{`${member?.user?.first_name} ${member?.user?.last_name}`}</dd>
+            </div>
+            <div className="d-item">
+              <dt className="d-label">Role</dt>
+              <dd className="d-content">
+                <Badge variant="outline" className="capitalize">
+                  {member?.role}
+                </Badge>
+              </dd>
+            </div>
+            <div className="d-item">
+              <dt className="d-label">Created At</dt>
+              {member?.created_at && (
+                <dd className="d-content">{format(member?.created_at || '', 'PPpp')}</dd>
+              )}
+            </div>
+            <div className="d-item">
+              <dt className="d-label">Invited by</dt>
+              <dd className="d-content">{`${member?.created_by.first_name} ${member?.created_by.last_name}`}</dd>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="mt-5 flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/projects/${params.project_id}/members`)}>
+            Back
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  )
+}
