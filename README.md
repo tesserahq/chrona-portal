@@ -1,4 +1,4 @@
-# Welcome to Chroma Portal
+# Welcome to Chrona Portal
 
 ## Development
 
