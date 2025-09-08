@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { fetchApi, NodeENVType } from '@/libraries/fetch'
 import { getProjectID, getWorkspaceID, setProjectID } from '@/libraries/storage'
@@ -81,9 +80,6 @@ export default function SelectProjectAssistant({
       <SelectTrigger className="focus:ring-transparent, rounded-sm focus:ring-0">
         <div className="pe-1">
           {loading ? 'Loading...' : project?.name || 'Select Project'}
-          <Badge variant="secondary" className="ml-2">
-            {project?.llm}
-          </Badge>
         </div>
       </SelectTrigger>
       <SelectContent>
