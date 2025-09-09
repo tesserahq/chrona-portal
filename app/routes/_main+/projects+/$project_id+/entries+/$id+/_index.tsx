@@ -69,7 +69,7 @@ export default function EntryDetailPage() {
 
   return (
     <div className="coreui-content-center animate-slide-up">
-      <Card className="coreui-card-center border-border">
+      <Card className="coreui-card-center border-border shadow-md">
         <CardHeader className="space-y-3">
           <h1 className="text-balance text-2xl font-bold text-foreground">
             {entry.title}
@@ -133,7 +133,7 @@ export default function EntryDetailPage() {
         </div>
 
         {entry.comments.map((comment) => (
-          <Card key={comment.id} className="border-border">
+          <Card key={comment.id} className="border-border shadow-md">
             <CardHeader>
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
