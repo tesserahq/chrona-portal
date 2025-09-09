@@ -2,6 +2,7 @@
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
 import EmptyContent from '@/components/misc/EmptyContent'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import { LabelTooltip } from '@/components/misc/LabelTooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,19 +17,20 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IEntry } from '@/types/entry'
-import { Link, useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useParams,
+} from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
 import { format, formatDistance } from 'date-fns'
-import {
-  EllipsisVertical,
-  EyeIcon,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Tag,
-  Trash2,
-} from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { EllipsisVertical, EyeIcon, Tag, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ActionFunctionArgs } from '@remix-run/node'
+import { redirectWithToast } from '@/utils/toast.server'
+import { toast } from 'sonner'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -39,12 +41,15 @@ export function loader() {
 
 export default function ProjectEntriesPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const params = useParams()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [entries, setEntries] = useState<IEntry[]>([])
+  const [entryDelete, setEntryDelete] = useState<IEntry>()
+  const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
 
   const fetchEntries = async () => {
     setIsLoading(true)
@@ -66,6 +71,15 @@ export default function ProjectEntriesPage() {
       fetchEntries()
     }
   }, [token])
+
+  useEffect(() => {
+    if (actionData?.success) {
+      // show success message
+      toast.success(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+    }
+  }, [actionData])
 
   const columns: ColumnDef<IEntry>[] = [
     {
@@ -229,15 +243,11 @@ export default function ProjectEntriesPage() {
               </Button>
               <Button
                 variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {}}>
-                <Pencil />
-                <span>Edit</span>
-              </Button>
-              <Button
-                variant="ghost"
                 className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {}}>
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setEntryDelete(entry)
+                }}>
                 <Trash2 />
                 <span>Delete</span>
               </Button>
@@ -254,10 +264,6 @@ export default function ProjectEntriesPage() {
     <div className="h-full animate-slide-up">
       <div className="mb-5 flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-foreground">Project Entries</h1>
-        <Button onClick={() => {}} size="sm">
-          <Plus />
-          Add New
-        </Button>
       </div>
 
       {entries.length === 0 ? (
@@ -265,14 +271,52 @@ export default function ProjectEntriesPage() {
           image="/images/empty-document.png"
           title="No entries found"
           description="This project doesn't have any entries yet. Entries will appear here once data is imported or created.">
-          <Button onClick={fetchEntries} variant="outline">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+          <Button onClick={() => navigate('new')} variant="black">
+            Start creating
           </Button>
         </EmptyContent>
       ) : (
         <DataTable columns={columns} data={entries} />
       )}
+
+      <ModalDelete
+        ref={deleteRef}
+        alert="Entry"
+        title={`Remove "${entryDelete?.title}" from entries`}
+        data={{
+          project_id: params.project_id,
+          id: entryDelete?.id,
+          token: token!,
+        }}
+      />
     </div>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { project_id, token, id } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/entries/${id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return { success: true, message: `Entry deleted successfully` }
+    }
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return redirectWithToast(`/projects/${project_id}/entries`, {
+      type: 'error',
+      title: 'Error',
+      description: `${convertError.status} - ${convertError.error}`,
+    })
+  }
 }

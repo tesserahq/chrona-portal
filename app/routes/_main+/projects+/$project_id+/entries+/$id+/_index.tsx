@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +9,7 @@ import { fetchApi } from '@/libraries/fetch'
 import { IEntry } from '@/types/entry'
 import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
-import { ArrowLeft, Calendar, FileText, Hash, Info, Tag, User } from 'lucide-react'
+import { ArrowLeft, CalendarDays, MessageSquare, Tag, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function loader() {
@@ -68,130 +68,142 @@ export default function EntryDetailPage() {
 
   return (
     <div className="coreui-content-center animate-slide-up">
-      <Card className="coreui-card-center">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">{entry.title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6 px-6 pb-5">
-          {/* Title and Body */}
-          <div className="prose prose-sm dark:prose-invert max-w-none">
-            <div className="whitespace-pre-wrap text-muted-foreground">{entry.body}</div>
-          </div>
+      <Card className="coreui-card-center border-border">
+        <CardHeader className="space-y-3">
+          <h1 className="text-balance text-2xl font-bold text-foreground">
+            {entry.title}
+          </h1>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-1">
-              <Calendar size={12} />
-              <span className="text-xs text-muted-foreground">
-                Created at {format(entry.created_at, 'PPpp')}
+          {/* Issue Metadata */}
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs">
+              <User className="h-4 w-4" />
+              <span className="font-medium">
+                {entry.source_author.author.display_name}
               </span>
+              <span>@{entry.source_author.author.email}</span>
             </div>
-            <div className="flex items-start justify-start gap-5">
-              {/* Tags */}
-              {entry.tags.length > 0 && (
-                <div>
-                  <h3 className="mb-3 flex items-center gap-2 font-medium text-foreground">
-                    <Tag className="h-4 w-4" />
-                    Tags
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {entry.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {/* Labels */}
-              {Object.keys(entry.labels).length > 0 && (
-                <div>
-                  <h3 className="mb-3 flex items-center gap-2 font-medium text-foreground">
-                    <Hash className="h-4 w-4" />
-                    Labels
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(entry.labels).map(([key, value]) => (
-                      <Badge key={key} variant="outline">
-                        {key}: {String(value)}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center gap-1">
+              <CalendarDays size={12} />
+              <span className="text-xs">Created {format(entry.created_at, 'PPpp')}</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <CalendarDays size={12} />
+              <span className="text-xs">Updated {format(entry.updated_at, 'PPpp')}</span>
             </div>
           </div>
 
-          {/* Source Author */}
-          {entry.source_author?.author && (
-            <div>
-              <h3 className="mb-1 flex items-center gap-2 text-sm font-medium text-foreground">
-                <User className="h-4 w-4" />
-                Author
-              </h3>
-              <div className="rounded-lg bg-muted/50">
-                <div className="flex-1 space-y-2">
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Name</dt>
-                    <dd className="text-sm font-medium text-foreground">
-                      {entry.source_author.author.display_name}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Email</dt>
-                    <dd className="text-sm text-foreground">
-                      {entry.source_author.author.email}
-                    </dd>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Labels */}
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(entry.labels).map(([key, value]) => (
+              <Badge key={key} variant="secondary">
+                {key}: {value}
+              </Badge>
+            ))}
+          </div>
 
-          {/* Source Information */}
-          {entry.source && (
-            <div>
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                <FileText className="h-4 w-4" />
-                Source
-              </h3>
-              <div className="rounded-lg bg-muted/50">
-                <div className="space-y-2">
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground">Name</dt>
-                    <dd className="font-mono text-xs text-foreground">
-                      {entry.source.name}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-muted-foreground">
-                      Description
-                    </dt>
-                    <dd className="font-mono text-xs text-foreground">
-                      {entry.source.description}
-                    </dd>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Tags */}
+          <div className="flex flex-wrap items-center gap-1">
+            <Tag className="h-4 w-4 text-muted-foreground" />
+            {entry.tags.map((tag, index) => (
+              <Badge key={index} variant="outline" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </CardHeader>
 
-          {/* Metadata */}
-          {Object.keys(entry.meta_data).length > 0 && (
-            <div>
-              <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
-                <Info className="h-4 w-4" />
-                Metadata
-              </h3>
-              <div className="rounded-lg bg-muted/50 px-2">
-                <pre className="overflow-auto text-xs text-muted-foreground">
-                  {JSON.stringify(entry.meta_data, null, 2)}
-                </pre>
-              </div>
-            </div>
-          )}
+        <CardContent className="p-6 pt-0">
+          <div className="prose prose-sm max-w-none text-foreground">
+            <p className="whitespace-pre-line text-pretty leading-relaxed">
+              {entry.body}
+            </p>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Comments Section */}
+      <div className="coreui-card-center mt-4 space-y-4">
+        <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+          <MessageSquare className="h-5 w-5" />
+          <span>Comments ({entry.comments.length})</span>
+        </div>
+
+        {entry.comments.map((comment) => (
+          <Card key={comment.id} className="border-border">
+            <CardHeader>
+              <div className="flex items-start gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage
+                    src={
+                      comment.source_author.author.avatar_url ||
+                      '/images/default-avatar.jpg'
+                    }
+                    alt={comment.source_author.author.display_name}
+                  />
+                  <AvatarFallback>
+                    {comment.source_author.author.display_name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-medium text-foreground">
+                      {comment.source_author.author.display_name}
+                    </span>
+                    <span className="text-muted-foreground">
+                      @{comment.source_author.author.email}
+                    </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">
+                      {format(comment.created_at, 'PPpp')}
+                    </span>
+                    {comment.created_at !== comment.updated_at && (
+                      <>
+                        <span className="text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground">
+                          edited {format(comment.updated_at, 'PPpp')}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Comment Labels */}
+                  {Object.entries(comment.labels).length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(comment.labels).map(([key, value]) => (
+                        <Badge key={key} variant="secondary">
+                          {key}: {value}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Comment Tags */}
+                  {comment.tags.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Tag className="h-3 w-3 text-muted-foreground" />
+                      {comment.tags.map((tag, index) => (
+                        <Badge key={index} variant="outline" className="text-xs">
+                          {tag}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="p-6 pt-0">
+              <div className="prose prose-sm max-w-none text-foreground">
+                <p className="text-pretty leading-relaxed">{comment.body}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

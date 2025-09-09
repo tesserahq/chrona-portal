@@ -48,8 +48,47 @@ export interface IEntry {
   updated_at: string
   source: IEntrySource
   source_author: IEntrySourceAuthor
+  comments: Comment[]
 }
 
 export interface IEntriesResponse {
   data: IEntry[]
+}
+
+// Comments
+export interface Comment {
+  body: string
+  source_author_id: string
+  entry_id: string
+  tags: string[]
+  labels: Record<string, string>
+  meta_data: Record<string, string>
+  id: string
+  created_at: string // ISO date string
+  updated_at: string // ISO date string
+  source_author: SourceAuthor
+}
+
+export interface SourceAuthor {
+  author_id: string
+  source_id: string
+  source_author_id: string
+  id: string
+  created_at: string // ISO date string
+  updated_at: string // ISO date string
+  author: Author
+}
+
+export interface Author {
+  display_name: string
+  avatar_url: string
+  email: string
+  tags: string[]
+  labels: Record<string, string>
+  meta_data: Record<string, string>
+  id: string
+  workspace_id: string
+  user_id: string | null
+  created_at: string // ISO date string
+  updated_at: string // ISO date string
 }

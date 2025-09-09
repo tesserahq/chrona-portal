@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
-import ModalDelete from '@/components/misc/DeleteConfirmation'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import JSONEditor from '@/components/misc/JsonEditor'
 import {
   Accordion,
