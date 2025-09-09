@@ -37,7 +37,7 @@ export default function SidebarPanel({ menuItems }: ISidebarPanelProps) {
                   <li
                     key={item.path}
                     className={cn(
-                      'flex items-center justify-between hover:bg-slate-50 dark:hover:bg-background',
+                      'flex items-center justify-between overflow-hidden rounded hover:bg-slate-50 dark:hover:bg-background',
                       (pathname === item.path || getActiveMenu(item.title)) &&
                         'bg-accent hover:bg-accent',
                     )}>

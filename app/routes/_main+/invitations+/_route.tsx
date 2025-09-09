@@ -7,17 +7,17 @@ import Separator from '@/components/ui/separator'
 import { useApp } from '@/context/AppContext'
 import { fetchApi } from '@/libraries/fetch'
 import { Invitation } from '@/types/invitation'
+import { IWorkspaceLogo } from '@/types/workspace'
 import { useLoaderData, useNavigate } from '@remix-run/react'
+import Avatar from 'boring-avatars'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 export function loader() {
   const apiUrl = process.env.API_URL
   const nodeEnv = process.env.NODE_ENV
-  const identiesApiUrl = process.env.IDENTIES_API_URL
-  const identiesHosturl = process.env.IDENTIES_HOST_URL
 
-  return { apiUrl, nodeEnv, identiesApiUrl, identiesHosturl }
+  return { apiUrl, nodeEnv }
 }
 
 export default function InvitationPage() {
@@ -124,15 +124,25 @@ export default function InvitationPage() {
         </EmptyContent>
       )}
       {invitations.map((invitation) => {
+        const logo: IWorkspaceLogo = JSON.parse(invitation.workspace.logo || '{}')
+        // Create gradient from all logo colors (using all 5 colors)
+        const gradientColors =
+          logo.colors && logo.colors.length >= 5
+            ? `linear-gradient(135deg, ${logo.colors[0]}2A, ${logo.colors[1]}2A, ${logo.colors[2]}2A, ${logo.colors[3]}2A, ${logo.colors[4]}2A)`
+            : 'linear-gradient(135deg, #49b9c71A, #2a9d8f1A, #e9c46a1A, #f4a2611A, #e76f511A)' // fallback gradient with 5 colors
+
         return (
-          <div key={invitation.id} className="flex flex-col items-center">
-            <img
-              src={invitation.workspace.logo || '/images/logo.png'}
-              alt="logo"
-              className="mx-a mb-5 mt-3 w-16"
+          <div
+            key={invitation.id}
+            className="flex animate-slide-up flex-col items-center">
+            <Avatar
+              name={logo.name}
+              colors={logo.colors}
+              variant={logo.variant as any}
+              size={50}
             />
-            <Card className="w-full max-w-md">
-              <CardContent className="px-6 pt-7">
+            <Card className="mt-5 w-full max-w-md">
+              <CardContent className="px-6 pt-7" style={{ background: gradientColors }}>
                 <div className="flex flex-col items-center justify-center px-16">
                   <p className="mb-2 text-center text-sm text-secondary-foreground">
                     {`${invitation.inviter.first_name} ${invitation.inviter.last_name}`}{' '}

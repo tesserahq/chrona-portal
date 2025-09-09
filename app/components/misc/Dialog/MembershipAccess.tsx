@@ -13,7 +13,7 @@ import {
 import { fetchApi, NodeENVType } from '@/libraries/fetch'
 import { IMembership } from '@/types/invitation'
 import { cn } from '@/utils/misc'
-import { ShieldUser, UserCog2, Users2 } from 'lucide-react'
+import { FileUser, ShieldUser, UserCog2, Users2 } from 'lucide-react'
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { toast } from 'sonner'
 import { AppPreloader } from '../AppPreloader'
@@ -96,6 +96,10 @@ const MembershipAccessDialog: React.ForwardRefRenderFunction<FuncProps, IProps> 
       setIsLoading(true)
       fetchRoles()
       setMember(member)
+      setSelectedRole({
+        id: member.role === 'admin' ? 'administrator' : member.role,
+        name: member.role,
+      })
     },
   }))
 
@@ -133,6 +137,7 @@ const MembershipAccessDialog: React.ForwardRefRenderFunction<FuncProps, IProps> 
                           {role.id === 'owner' && <ShieldUser />}
                           {role.id === 'administrator' && <UserCog2 />}
                           {role.id === 'collaborator' && <Users2 />}
+                          {role.id === 'project_member' && <FileUser />}
                         </>
                         {role.name}
                       </div>

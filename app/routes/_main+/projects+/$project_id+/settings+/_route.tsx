@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
-import ModalDelete from '@/components/misc/DeleteConfirmation'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import JSONEditor from '@/components/misc/JsonEditor'
 import {
   Accordion,
@@ -100,6 +100,7 @@ export default function ProjectSetting() {
       <FormWrapper
         method="PUT"
         title="Edit Project"
+        className="border border-input"
         isSubmitting={navigation.state === 'submitting'}
         hiddenInputs={{
           // Hidden inputs are required because closed accordions prevent the form from reading field values.
