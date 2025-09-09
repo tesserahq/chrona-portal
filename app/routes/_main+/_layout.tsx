@@ -45,6 +45,11 @@ export default function Layout() {
     //   icon: <Bot size={18} />,
     // },
     {
+      title: 'Entries',
+      path: `/projects/${params.project_id}/entries`,
+      icon: <File size={18} />,
+    },
+    {
       title: 'Members',
       path: `/projects/${params.project_id}/members`,
       icon: <Users size={18} />,

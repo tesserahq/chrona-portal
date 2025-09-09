@@ -100,6 +100,7 @@ export default function ProjectSetting() {
       <FormWrapper
         method="PUT"
         title="Edit Project"
+        className="border border-input"
         isSubmitting={navigation.state === 'submitting'}
         hiddenInputs={{
           // Hidden inputs are required because closed accordions prevent the form from reading field values.

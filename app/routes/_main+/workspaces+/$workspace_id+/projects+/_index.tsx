@@ -99,11 +99,11 @@ export default function WorkspaceProjects() {
                   <div className="flex-1">
                     <Link
                       to={`/projects/${project.id}/settings`}
-                      className="mb-1 text-base font-medium text-black hover:text-primary hover:underline dark:text-primary-foreground">
+                      className="text-base font-medium text-black hover:text-primary hover:underline dark:text-primary-foreground">
                       {project.name}
                     </Link>
 
-                    <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                    <div className="mt-0.5 flex items-center text-xs text-slate-500 dark:text-slate-400">
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger>
