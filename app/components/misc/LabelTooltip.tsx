@@ -12,10 +12,10 @@ export function LabelTooltip({ labels }: { labels: any[] }) {
       <Tooltip>
         <TooltipTrigger>
           <Badge variant="secondary">
-            {truncateValue(`${labels[0][0]}:${labels[0][1]}`)}
+            {truncateValue(`${labels[0][0]}: ${labels[0][1]}`)}
           </Badge>
         </TooltipTrigger>
-        <TooltipContent className="px-3 py-2" align="start" side="top">
+        <TooltipContent className="z-10 px-3 py-2" align="start" side="top">
           <h1 className="mb-2 font-medium">Labels</h1>
           <div className="flex flex-col items-start">
             {labels.map(([key, value]: any) => (

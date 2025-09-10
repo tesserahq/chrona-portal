@@ -93,7 +93,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      {meta?.page_size && (
+      {meta?.size && (
         <div className="pt-4">
           <Pagination meta={meta} />
         </div>
