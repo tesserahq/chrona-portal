@@ -1,13 +1,14 @@
 export interface IPagingInfo {
-  page_size: number
-  current_page: number
-  total_count: number
-  total_pages: number
+  pages: number
+  page: number
+  size: number
+  total: number
 }
 
 export interface IPaging<T> {
-  data: T[]
-  meta: IPagingInfo
-  status: number
-  message: string
+  items: T[]
+  page: number
+  pages: number
+  size: number
+  total: number
 }

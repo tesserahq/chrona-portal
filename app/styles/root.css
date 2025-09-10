@@ -69,12 +69,12 @@ body {
     --popover-foreground: 0, 0%, 90%; /* #e5e5e5 */
     --primary: 21, 100%, 66%; /* #ff8f52 */
     --primary-foreground: 0, 0%, 100%; /* #ffffff */
-    --secondary: 0, 0%, 14.9%; /* #262626 */
-    --secondary-foreground: 0, 0%, 98%; /* #fafafa */
+    --secondary: 222, 19%, 20%; /* #2a303e */
+    --secondary-foreground: 0 0% 98%; /* #e5e5e5 */
     --muted: 222, 19%, 20%; /* #2a303e */
     --muted-foreground: 0, 0%, 64%; /* #a3a3a3 */
     --accent: 224, 16%, 28%; /* #3d4354 */
-    --accent-foreground: 21, 100%, 95%; /* #fff4f0 */
+    --accent-foreground: 213, 97%, 87%; /* #bfdbfe */
     --destructive: 0, 84%, 60%; /* #ef4444 */
     --destructive-foreground: 0, 0%, 98%; /* #fafafa */
     --border: 224, 16%, 28%; /* #3d4354 */
@@ -354,4 +354,17 @@ nav.header .header-container {
 
 .button-link {
   @apply font-medium text-primary underline-offset-4 hover:underline;
+}
+
+.no-scrollbar {
+  /* For WebKit browsers */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* For Firefox */
+  scrollbar-width: none;
+
+  /* For older Edge and IE */
+  -ms-overflow-style: none;
 }
