@@ -37,7 +37,7 @@ import { ensureCanonicalPagination } from '@/utils/pagination.server'
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
   const canonical = ensureCanonicalPagination(request, {
-    defaultSize: 100,
+    defaultSize: 25,
     defaultPage: 1,
   })
 
@@ -98,6 +98,45 @@ export default function ProjectEntriesPage() {
 
   const columns: ColumnDef<IEntry>[] = [
     {
+      accessorKey: 'id',
+      header: '',
+      size: 5,
+      cell: ({ row }) => {
+        const entry = row.original
+
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <EllipsisVertical />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-44 p-2">
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() =>
+                  navigate(`/projects/${params.project_id}/entries/${entry.id}`)
+                }>
+                <EyeIcon />
+                <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setEntryDelete(entry)
+                }}>
+                <Trash2 />
+                <span>Delete</span>
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )
+      },
+    },
+    {
       accessorKey: 'title',
       header: 'Title',
       cell: ({ row }) => {
@@ -122,19 +161,40 @@ export default function ProjectEntriesPage() {
       accessorKey: 'tags',
       header: 'Tags',
       cell: ({ row }) => {
-        const entry = row.original
+        const tags = row.original.tags || []
+        const firstTag = tags[0]
+        const remaining = tags.slice(1)
+
         return (
-          <div className="flex flex-wrap gap-1">
-            {entry.tags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="secondary" className="text-xs">
+          <div className="flex flex-wrap items-center gap-1">
+            {firstTag && (
+              <Badge key={firstTag} variant="secondary" className="text-xs">
                 <Tag className="mr-1 h-3 w-3" />
-                {tag}
+                {firstTag}
               </Badge>
-            ))}
-            {entry.tags.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{entry.tags.length - 3}
-              </Badge>
+            )}
+
+            {remaining.length > 0 && (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Badge variant="outline" className="cursor-pointer text-xs">
+                      +{remaining.length}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent className="px-3 py-2" side="bottom">
+                    <h1 className="mb-2 font-medium">Tags</h1>
+                    <div className="flex max-w-xs flex-wrap gap-1">
+                      {remaining.map((t) => (
+                        <Badge key={t} variant="secondary" className="text-xs">
+                          <Tag className="mr-1 h-3 w-3" />
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
         )
@@ -143,6 +203,7 @@ export default function ProjectEntriesPage() {
     {
       accessorKey: 'labels',
       header: 'Labels',
+      size: 150,
       cell: ({ row }) => {
         const isValidLabels: boolean =
           row.original.labels !== null && Object.keys(row.original.labels).length > 0
@@ -189,6 +250,7 @@ export default function ProjectEntriesPage() {
     {
       accessorKey: 'created_at',
       header: 'Created',
+      size: 130,
       cell: ({ row }) => {
         const entry = row.original
         return (
@@ -212,6 +274,7 @@ export default function ProjectEntriesPage() {
     {
       accessorKey: 'updated_at',
       header: 'Updated',
+      size: 130,
       cell: ({ row }) => {
         const entry = row.original
         return (
@@ -229,45 +292,6 @@ export default function ProjectEntriesPage() {
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-        )
-      },
-    },
-    {
-      accessorKey: 'id',
-      header: '',
-      size: 10,
-      cell: ({ row }) => {
-        const entry = row.original
-
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-44 p-2">
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() =>
-                  navigate(`/projects/${params.project_id}/entries/${entry.id}`)
-                }>
-                <EyeIcon />
-                <span>View</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {
-                  deleteRef.current?.onOpen()
-                  setEntryDelete(entry)
-                }}>
-                <Trash2 />
-                <span>Delete</span>
-              </Button>
-            </PopoverContent>
-          </Popover>
         )
       },
     },
@@ -293,7 +317,7 @@ export default function ProjectEntriesPage() {
           meta={{
             page: entries?.page || 1,
             pages: entries?.pages || 1,
-            size: entries?.size || 100,
+            size: entries?.size || 25,
             total: entries?.total || 0,
           }}
         />
