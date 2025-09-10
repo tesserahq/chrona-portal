@@ -28,26 +28,37 @@ import { ColumnDef } from '@tanstack/react-table'
 import { format, formatDistance } from 'date-fns'
 import { EllipsisVertical, EyeIcon, Tag, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { ActionFunctionArgs } from '@remix-run/node'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { redirectWithToast } from '@/utils/toast.server'
 import { toast } from 'sonner'
+import { IPaging } from '@/types/pagination'
+import { ensureCanonicalPagination } from '@/utils/pagination.server'
 
-export function loader() {
+export function loader({ request }: LoaderFunctionArgs) {
+  // This keeps pagination canonicalization consistent across routes.
+  const canonical = ensureCanonicalPagination(request, {
+    defaultSize: 100,
+    defaultPage: 1,
+  })
+
+  // to redirect early if not canonical (ie: ?page=0 or ?size=9999)
+  if (canonical instanceof Response) return canonical
+
   const apiUrl = process.env.API_URL
   const nodeEnv = process.env.NODE_ENV
 
-  return { apiUrl, nodeEnv }
+  return { apiUrl, nodeEnv, size: canonical.size, page: canonical.page }
 }
 
 export default function ProjectEntriesPage() {
-  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { apiUrl, nodeEnv, size, page } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const params = useParams()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [entries, setEntries] = useState<IEntry[]>([])
+  const [entries, setEntries] = useState<IPaging<IEntry>>()
   const [entryDelete, setEntryDelete] = useState<IEntry>()
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
 
@@ -56,9 +67,11 @@ export default function ProjectEntriesPage() {
 
     try {
       const url = `${apiUrl}/projects/${params.project_id}/entries`
-      const response = await fetchApi(url, token!, nodeEnv)
+      const response: IPaging<IEntry> = await fetchApi(url, token!, nodeEnv, {
+        pagination: { page, size },
+      })
 
-      setEntries(response.data || [])
+      setEntries(response)
     } catch (error: any) {
       handleApiError(error)
     } finally {
@@ -70,7 +83,7 @@ export default function ProjectEntriesPage() {
     if (token) {
       fetchEntries()
     }
-  }, [token])
+  }, [token, size, page])
 
   useEffect(() => {
     if (actionData?.success) {
@@ -78,6 +91,8 @@ export default function ProjectEntriesPage() {
       toast.success(actionData.message)
       // close modal
       deleteRef?.current?.onClose()
+      // reload entries
+      fetchEntries()
     }
   }, [actionData])
 
@@ -92,8 +107,8 @@ export default function ProjectEntriesPage() {
             <div className="max-w-[300px]">
               <Link
                 to={`/projects/${params.project_id}/entries/${entry.id}`}
-                className="truncate font-medium text-foreground hover:text-primary hover:underline">
-                {entry.title}
+                className="font-medium text-foreground hover:text-primary hover:underline">
+                <p className="truncate">{entry.title}</p>
               </Link>
               <p className="truncate text-xs text-muted-foreground">
                 {entry.body.substring(0, 100)}...
@@ -263,20 +278,25 @@ export default function ProjectEntriesPage() {
   return (
     <div className="h-full animate-slide-up">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-foreground">Project Entries</h1>
+        <h1 className="text-2xl font-bold dark:text-foreground">Entries</h1>
       </div>
 
-      {entries.length === 0 ? (
+      {entries?.items.length === 0 ? (
         <EmptyContent
           image="/images/empty-document.png"
           title="No entries found"
-          description="This project doesn't have any entries yet. Entries will appear here once data is imported or created.">
-          <Button onClick={() => navigate('new')} variant="black">
-            Start creating
-          </Button>
-        </EmptyContent>
+          description="This project doesn't have any entries yet. Entries will appear here once data is imported or created."></EmptyContent>
       ) : (
-        <DataTable columns={columns} data={entries} />
+        <DataTable
+          columns={columns}
+          data={entries?.items || []}
+          meta={{
+            page: entries?.page || 1,
+            pages: entries?.pages || 1,
+            size: entries?.size || 100,
+            total: entries?.total || 0,
+          }}
+        />
       )}
 
       <ModalDelete
