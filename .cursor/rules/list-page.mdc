@@ -1,0 +1,65 @@
+---
+globs:
+description: Use this rule when generating a page with call data GET from API
+alwaysApply: false
+---
+
+@api-integration.mdc
+
+Implementation:
+
+- Create a folder named <name>+ and a file with name \_index.tsx inside it
+- Call <AppPreloader/> to display loading, located in [app/components/mics/AppPreloader.tsx](mdc:app/components/mics/AppPreloader.tsx)
+
+Example:
+
+```tsx
+export function loader() {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+
+  return { apiUrl, nodeEnv }
+}
+
+export default function <name>Page() {
+  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const handleApiError = useHandleApiError()
+  const { token } = useApp()
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [data, setData] = useState<IProps>()
+
+  const fetchData = async () => {
+    try {
+      const data = await fetchApi(endpoint, token, nodeEnv)
+      // Handle success
+      setData(data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (token) {
+      fetch(data)
+    }
+  }, [token])
+
+  if (isLoading) {
+    return <AppPreloader />
+  }
+
+  return (
+    <div className="h-full animate-slide-up">
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-2xl font-bold dark:text-foreground">Workspace</h1>
+      </div>
+
+      <div></div>
+    </div>
+  )
+}
+```
+
+Reference: workspaces in app/routes/\_main+/workspaces+/\_index.tsx

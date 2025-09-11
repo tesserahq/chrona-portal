@@ -98,7 +98,7 @@ export default function WorkspaceProjects() {
                 <CardContent className="flex items-center gap-2 pt-4">
                   <div className="flex-1">
                     <Link
-                      to={`/projects/${project.id}/settings`}
+                      to={`/projects/${project.id}/entries`}
                       className="text-base font-medium text-black hover:text-primary hover:underline dark:text-primary-foreground">
                       {project.name}
                     </Link>
@@ -144,7 +144,7 @@ export default function WorkspaceProjects() {
                       <Button
                         variant="ghost"
                         className="flex w-full justify-start"
-                        onClick={() => navigate(`/projects/${project.id}/settings`)}>
+                        onClick={() => navigate(`/projects/${project.id}/entries`)}>
                         <EyeIcon />
                         <span>View</span>
                       </Button>

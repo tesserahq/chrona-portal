@@ -3,7 +3,6 @@ import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
 import EmptyContent from '@/components/misc/EmptyContent'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
-import { LabelTooltip } from '@/components/misc/LabelTooltip'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -16,7 +15,6 @@ import {
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
-import { IEntry } from '@/types/entry'
 import {
   Link,
   useActionData,
@@ -26,13 +24,15 @@ import {
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
 import { format, formatDistance } from 'date-fns'
-import { EllipsisVertical, EyeIcon, Tag, Trash2 } from 'lucide-react'
+import { EllipsisVertical, EyeIcon, Pencil, Tag, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { redirectWithToast } from '@/utils/toast.server'
 import { toast } from 'sonner'
-import { IPaging } from '@/types/pagination'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
+import { IPaging } from '@/types/pagination'
+import { IDigestGenerator } from '@/types/digest'
+import { LabelTooltip } from '@/components/misc/LabelTooltip'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -50,7 +50,7 @@ export function loader({ request }: LoaderFunctionArgs) {
   return { apiUrl, nodeEnv, size: canonical.size, page: canonical.page }
 }
 
-export default function ProjectEntriesPage() {
+export default function DigestGeneratorsPage() {
   const { apiUrl, nodeEnv, size, page } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const { token } = useApp()
@@ -58,20 +58,20 @@ export default function ProjectEntriesPage() {
   const params = useParams()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const [entries, setEntries] = useState<IPaging<IEntry>>()
-  const [entryDelete, setEntryDelete] = useState<IEntry>()
+  const [digestConfigs, setDigestConfigs] = useState<IPaging<IDigestGenerator>>()
+  const [configDelete, setConfigDelete] = useState<IDigestGenerator>()
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
 
-  const fetchEntries = async () => {
+  const fetchDigestConfigs = async () => {
     setIsLoading(true)
 
     try {
-      const url = `${apiUrl}/projects/${params.project_id}/entries`
-      const response: IPaging<IEntry> = await fetchApi(url, token!, nodeEnv, {
-        pagination: { page, size },
+      const url = `${apiUrl}/projects/${params.project_id}/digest-generation-configs`
+      const response: IPaging<IDigestGenerator> = await fetchApi(url, token!, nodeEnv, {
+        pagination: { size, page },
       })
 
-      setEntries(response)
+      setDigestConfigs(response)
     } catch (error: any) {
       handleApiError(error)
     } finally {
@@ -81,9 +81,9 @@ export default function ProjectEntriesPage() {
 
   useEffect(() => {
     if (token) {
-      fetchEntries()
+      fetchDigestConfigs()
     }
-  }, [token, size, page])
+  }, [token])
 
   useEffect(() => {
     if (actionData?.success) {
@@ -91,12 +91,12 @@ export default function ProjectEntriesPage() {
       toast.success(actionData.message)
       // close modal
       deleteRef?.current?.onClose()
-      // reload entries
-      fetchEntries()
+      // refresh data
+      fetchDigestConfigs()
     }
   }, [actionData])
 
-  const columns: ColumnDef<IEntry>[] = [
+  const columns: ColumnDef<IDigestGenerator>[] = [
     {
       accessorKey: 'id',
       header: '',
@@ -116,17 +116,27 @@ export default function ProjectEntriesPage() {
                 variant="ghost"
                 className="flex w-full justify-start"
                 onClick={() =>
-                  navigate(`/projects/${params.project_id}/entries/${entry.id}`)
+                  navigate(`/projects/${params.project_id}/digest-generator/${entry.id}`)
                 }>
                 <EyeIcon />
                 <span>View</span>
               </Button>
               <Button
                 variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  const url = `/projects/${params.project_id}/digest-generator/${entry.id}/edit`
+                  navigate(url)
+                }}>
+                <Pencil />
+                <span>Edit</span>
+              </Button>
+              <Button
+                variant="ghost"
                 className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
                 onClick={() => {
                   deleteRef.current?.onOpen()
-                  setEntryDelete(entry)
+                  setConfigDelete(entry)
                 }}>
                 <Trash2 />
                 <span>Delete</span>
@@ -139,21 +149,63 @@ export default function ProjectEntriesPage() {
     {
       accessorKey: 'title',
       header: 'Title',
+      size: 80,
+      cell: ({ row }) => {
+        const config = row.original
+        return (
+          <div className="flex items-center gap-2">
+            <div className="">
+              <Link
+                to={`/projects/${params.project_id}/digest-generator/${config.id}`}
+                className="truncate font-medium text-foreground hover:text-primary hover:underline">
+                {config.title}
+              </Link>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'timezone',
+      header: 'Timezone',
+      size: 10,
+    },
+    {
+      accessorKey: 'cron_expression',
+      header: 'Chrone Expression',
+      size: 154,
+    },
+    {
+      accessorKey: 'generate_empty_digest',
+      header: 'Generate Empty Digest',
+      size: 180,
+      cell: ({ row }) => {
+        return (
+          <Badge variant="secondary">
+            {row.original.generate_empty_digest ? 'true' : 'false'}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: 'system_prompt',
+      header: 'System Prompt',
+      size: 90,
       cell: ({ row }) => {
         const entry = row.original
         return (
-          <div className="flex items-center gap-2">
-            <div className="max-w-[300px]">
-              <Link
-                to={`/projects/${params.project_id}/entries/${entry.id}`}
-                className="font-medium text-foreground hover:text-primary hover:underline">
-                <p className="truncate">{entry.title}</p>
-              </Link>
-              <p className="truncate text-xs text-muted-foreground">
-                {entry.body.substring(0, 100)}...
-              </p>
-            </div>
-          </div>
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="block max-w-28 cursor-pointer truncate text-muted-foreground">
+                  {entry.system_prompt || 'No system prompt'}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-lg" side="bottom">
+                {entry.system_prompt}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )
       },
     },
@@ -161,9 +213,9 @@ export default function ProjectEntriesPage() {
       accessorKey: 'tags',
       header: 'Tags',
       cell: ({ row }) => {
-        const tags = row.original.tags || []
-        const firstTag = tags[0]
-        const remaining = tags.slice(1)
+        const filterTags = row.original.tags || []
+        const firstTag = filterTags[0]
+        const remaining = filterTags.slice(1)
 
         return (
           <div className="flex flex-wrap items-center gap-1">
@@ -203,54 +255,22 @@ export default function ProjectEntriesPage() {
     {
       accessorKey: 'labels',
       header: 'Labels',
-      size: 150,
+      size: 100,
       cell: ({ row }) => {
         const isValidLabels: boolean =
           row.original.labels !== null && Object.keys(row.original.labels).length > 0
 
         return (
-          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
-        )
-      },
-    },
-    {
-      accessorKey: 'source.name',
-      header: 'Source',
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <div className="max-w-[200px]">
-            <p className="truncate text-sm font-medium">{entry.source.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {entry.source.description}
-            </p>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'source_author.author.display_name',
-      header: 'Author',
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <div className="flex items-center gap-2">
-            <div className="max-w-[150px]">
-              <p className="truncate text-sm font-medium">
-                {entry.source_author.author.display_name}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {entry.source_author.author.email}
-              </p>
-            </div>
-          </div>
+          isValidLabels && (
+            <LabelTooltip labels={Object.entries(row.original.labels)} side="left" />
+          )
         )
       },
     },
     {
       accessorKey: 'created_at',
       header: 'Created',
-      size: 130,
+      size: 100,
       cell: ({ row }) => {
         const entry = row.original
         return (
@@ -274,7 +294,7 @@ export default function ProjectEntriesPage() {
     {
       accessorKey: 'updated_at',
       header: 'Updated',
-      size: 130,
+      size: 100,
       cell: ({ row }) => {
         const entry = row.original
         return (
@@ -302,34 +322,39 @@ export default function ProjectEntriesPage() {
   return (
     <div className="h-full animate-slide-up">
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-2xl font-bold dark:text-foreground">Entries</h1>
+        <h1 className="text-2xl font-bold dark:text-foreground">Digest Generators</h1>
+        <Button onClick={() => navigate('new')}>New Digest Generator</Button>
       </div>
 
-      {entries?.items.length === 0 ? (
+      {digestConfigs?.items.length === 0 ? (
         <EmptyContent
-          image="/images/empty-document.png"
-          title="No entries found"
-          description="This project doesn't have any entries yet. Entries will appear here once data is imported or created."></EmptyContent>
+          image="/images/empty-digest.png"
+          title="No digest generators found"
+          description="This project doesn't have any digest generators yet. Create your first digest generator to start generating automated summaries.">
+          <Button onClick={() => navigate('new')} variant="black">
+            Create Digest Generator
+          </Button>
+        </EmptyContent>
       ) : (
         <DataTable
           columns={columns}
-          data={entries?.items || []}
+          data={digestConfigs?.items || []}
           meta={{
-            page: entries?.page || 1,
-            pages: entries?.pages || 1,
-            size: entries?.size || 25,
-            total: entries?.total || 0,
+            page: digestConfigs?.page || 1,
+            pages: digestConfigs?.pages || 1,
+            size: digestConfigs?.size || 25,
+            total: digestConfigs?.total || 0,
           }}
         />
       )}
 
       <ModalDelete
         ref={deleteRef}
-        alert="Entry"
-        title={`Remove "${entryDelete?.title}" from entries`}
+        alert="Digest Generator"
+        title={`Remove "${configDelete?.title}" from digest generators`}
         data={{
           project_id: params.project_id,
-          id: entryDelete?.id,
+          id: configDelete?.id,
           token: token!,
         }}
       />
@@ -346,18 +371,18 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     if (request.method === 'DELETE') {
-      const url = `${apiUrl}/entries/${id}`
+      const url = `${apiUrl}/digest-generation-configs/${id}`
 
       await fetchApi(url, token as string, nodeEnv, {
         method: 'DELETE',
       })
 
-      return { success: true, message: `Entry deleted successfully` }
+      return { success: true, message: `Digest generator deleted successfully` }
     }
   } catch (error: any) {
     const convertError = JSON.parse(error?.message)
 
-    return redirectWithToast(`/projects/${project_id}/entries`, {
+    return redirectWithToast(`/projects/${project_id}/digest-generator`, {
       type: 'error',
       title: 'Error',
       description: `${convertError.status} - ${convertError.error}`,

@@ -1,0 +1,68 @@
+---
+globs:
+description: Use this rule when generating a page detail with call data GET from API
+alwaysApply: false
+---
+
+@api-integration.mdc
+
+Implementation:
+
+- Create a folder named $id+ and a file with name \_index.tsx inside it
+- Call <AppPreloader/> to display loading, located in [app/components/mics/AppPreloader.tsx](mdc:app/components/mics/AppPreloader.tsx)
+
+Example:
+
+```tsx
+export function loader() {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+
+  return { apiUrl, nodeEnv }
+}
+
+export default function <name>Page() {
+  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const handleApiError = useHandleApiError()
+  const { token } = useApp()
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [data, setData] = useState<IProps>()
+
+  const fetchData = async () => {
+    try {
+      const data = await fetchApi(endpoint, token, nodeEnv)
+      // Handle success
+      setData(data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (token) {
+      fetch(data)
+    }
+  }, [token])
+
+  if (isLoading) {
+    return <AppPreloader />
+  }
+
+  return (
+    <div className="coreui-content-center animate-slide-up">
+      <Card className="coreui-card-center border-border shadow-md">
+         <CardHeader className="space-y-3">
+          <h1 className="text-balance text-2xl font-bold text-foreground">
+              Title
+            </h1>
+         </CardHeader>
+         <CardContent className="p-6 pt-0"></CardContent>
+      </Card>
+    </div>
+  )
+}
+```
+
+Reference: entries in app/routes/\_main+/projects+/$project_id+/entries+/$id+/\_index.tsx

@@ -1,0 +1,95 @@
+---
+description: Use this rule to generate file and page for create page
+globs:
+alwaysApply: false
+---
+
+@api-integration.mdc
+
+Implementation:
+
+- Create a file with name `new.tsx` inside it
+- Call <FormWrapper>, <FormField /> from `core-ui` and fill required props from that components
+- Call actionData hooks named `useActionData()`, import from `@remix-run/react`
+- Call hooks navigation to check loading state after user submitting, import form `@remix-run/react`
+- Create state errorField to check error after submitting form
+- Send token from useApp into `hiddenInputs`
+
+Example:
+
+```tsx
+export default function <Name>Create() {
+  const [errorFields, setErrorFields] = useState<any>()
+
+  useEffect(() => {
+    if (actionData?.errors) {
+      setErrorFields(actionData.errors)
+    }
+  }, [actionData])
+
+  return <FormWrapper
+          method="POST"
+          title="Create Workspace"
+          onCancel={onCancel}
+          isSubmitting={navigation.state === 'submitting'}
+          hiddenInputs={{
+            token: token!,
+          }}>
+           <FormField
+            label="Name"
+            name="name"
+            error={errorFields?.name}
+          />
+     </FormWrapper>
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+  const { name, description, identifier, locked, token, logo } = Object.fromEntries(formData)
+
+  const validated = workspaceSchema.safeParse({
+    name,
+    description,
+    identifier,
+    locked: locked === 'on',
+  })
+
+  if (!validated.success) {
+    return Response.json({ errors: validated.error.flatten().fieldErrors })
+  }
+
+  try {
+    const response = await fetchApi(`${apiUrl}/workspaces`, token.toString(), nodeEnv, {
+      method: 'POST',
+      body: JSON.stringify({
+        name: name.toString(),
+        description: description.toString(),
+        identifier: identifier.toString(),
+        locked: locked === 'on',
+        logo,
+      }),
+    })
+
+    return redirectWithToast(`/workspaces/${response.id}/overview`, {
+      type: 'success',
+      title: 'Success',
+      description: 'Successfully created workspace',
+    })
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return redirectWithToast(
+      convertError.status === 401 ? '/logout' : '/workspaces/new',
+      {
+        type: 'error',
+        title: 'Error',
+        description: `${convertError.status} - ${convertError.error}`,
+      },
+    )
+  }
+}
+```
+
+Reference: create workspaces in app/routes/\_main+/workspaces+/\new.tsx

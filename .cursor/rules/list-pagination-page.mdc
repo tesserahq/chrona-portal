@@ -1,0 +1,76 @@
+---
+globs:
+description: Use this rule when generating a page with pagination
+alwaysApply: false
+---
+
+@api-integration.mdc
+
+Implementation:
+
+- Create a folder named <name>+ and a file with name \_index.tsx inside it
+- Call <AppPreloader/> to display loading, located in [app/components/mics/AppPreloader.tsx](mdc:app/components/mics/AppPreloader.tsx)
+- Call ensureCanonicalPagination() if want generate with pagination from [app/utils/pagination.server] in loader and set defaultSize 25 and defaultPage 1
+- Call interface IPaging from [app/types/pagination.ts]
+
+Example:
+
+```tsx
+export function loader({ request }: LoaderFunctionArgs) {
+  // This keeps pagination canonicalization consistent across routes.
+  const canonical = ensureCanonicalPagination(request, {
+    defaultSize: 25,
+    defaultPage: 1,
+  })
+
+  // to redirect early if not canonical (ie: ?page=0 or ?size=9999)
+  if (canonical instanceof Response) return canonical
+
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+
+  return { apiUrl, nodeEnv, size: canonical.size, page: canonical.page }
+}
+
+export default function <name>Page() {
+  const { apiUrl, nodeEnv, size, page } = useLoaderData<typeof loader>()
+  const handleApiError = useHandleApiError()
+  const { token } = useApp()
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [data, setData] = useState<IPaging<IProps>>()
+
+  const fetchData = async () => {
+    try {
+      const data:IPaging<IProps> = await fetchApi(endpoint, token, nodeEnv)
+      // Handle success
+      setData(data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (token) {
+      fetch(data)
+    }
+  }, [token])
+
+  if (isLoading) {
+    return <AppPreloader />
+  }
+
+  return (
+    <div className="h-full animate-slide-up">
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-2xl font-bold dark:text-foreground">Workspace</h1>
+      </div>
+
+      <div></div>
+    </div>
+  )
+}
+```
+
+Reference: entries in app/routes/\_main+/projects+/$project_id+/entries+/\_index.tsx
