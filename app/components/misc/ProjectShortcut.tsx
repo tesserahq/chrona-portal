@@ -68,7 +68,7 @@ export default function ProjectShortcut({ apiUrl, nodeEnv }: Props) {
       {isLoading ? (
         <b>Loading...</b>
       ) : (
-        <Link to={`/projects/${project?.id}/settings`}>
+        <Link to={`/projects/${project?.id}/entries`}>
           <b>{project?.name || 'Select a project'}</b>
         </Link>
       )}
