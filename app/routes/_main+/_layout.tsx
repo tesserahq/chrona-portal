@@ -45,14 +45,14 @@ export default function Layout() {
     //   icon: <Bot size={18} />,
     // },
     {
-      title: 'Digest Generator',
-      path: `/projects/${params.project_id}/digest-generator`,
-      icon: <Cog size={18} />,
-    },
-    {
       title: 'Entries',
       path: `/projects/${params.project_id}/entries`,
       icon: <File size={18} />,
+    },
+    {
+      title: 'Digest Generator',
+      path: `/projects/${params.project_id}/digest-generator`,
+      icon: <Cog size={18} />,
     },
     {
       title: 'Members',

@@ -149,12 +149,12 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'title',
       header: 'Title',
-      size: 300,
+      size: 80,
       cell: ({ row }) => {
         const config = row.original
         return (
           <div className="flex items-center gap-2">
-            <div className="max-w-[300px]">
+            <div className="">
               <Link
                 to={`/projects/${params.project_id}/digest-generator/${config.id}`}
                 className="truncate font-medium text-foreground hover:text-primary hover:underline">
@@ -166,9 +166,52 @@ export default function DigestGeneratorsPage() {
       },
     },
     {
+      accessorKey: 'timezone',
+      header: 'Timezone',
+      size: 10,
+    },
+    {
+      accessorKey: 'cron_expression',
+      header: 'Chrone Expression',
+      size: 154,
+    },
+    {
+      accessorKey: 'generate_empty_digest',
+      header: 'Generate Empty Digest',
+      size: 180,
+      cell: ({ row }) => {
+        return (
+          <Badge variant="secondary">
+            {row.original.generate_empty_digest ? 'true' : 'false'}
+          </Badge>
+        )
+      },
+    },
+    {
+      accessorKey: 'system_prompt',
+      header: 'System Prompt',
+      size: 90,
+      cell: ({ row }) => {
+        const entry = row.original
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="block max-w-28 cursor-pointer truncate text-muted-foreground">
+                  {entry.system_prompt || 'No system prompt'}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-lg" side="bottom">
+                {entry.system_prompt}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+    },
+    {
       accessorKey: 'tags',
       header: 'Tags',
-      size: 250,
       cell: ({ row }) => {
         const filterTags = row.original.tags || []
         const firstTag = filterTags[0]
@@ -212,40 +255,22 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'labels',
       header: 'Labels',
+      size: 100,
       cell: ({ row }) => {
         const isValidLabels: boolean =
           row.original.labels !== null && Object.keys(row.original.labels).length > 0
 
         return (
-          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
-        )
-      },
-    },
-    {
-      accessorKey: 'system_prompt',
-      header: 'System Prompt',
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="block max-w-xs cursor-pointer truncate text-xs text-muted-foreground">
-                  {entry.system_prompt || 'No system prompt'}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-lg" side="bottom">
-                {entry.system_prompt}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          isValidLabels && (
+            <LabelTooltip labels={Object.entries(row.original.labels)} side="left" />
+          )
         )
       },
     },
     {
       accessorKey: 'created_at',
       header: 'Created',
-      size: 130,
+      size: 100,
       cell: ({ row }) => {
         const entry = row.original
         return (
@@ -269,7 +294,7 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'updated_at',
       header: 'Updated',
-      size: 130,
+      size: 100,
       cell: ({ row }) => {
         const entry = row.original
         return (

@@ -219,7 +219,7 @@ export default function WorkspaceHome() {
                 <span className="text-base font-bold">No Projects Found</span>
               </div>
             }
-            getItemLink={({ id }) => `/projects/${id}/settings`}
+            getItemLink={({ id }) => `/projects/${id}/entries`}
             getItemName={({ name }) => name}
             getUpdatedAt={({ updated_at }) => updated_at}
           />

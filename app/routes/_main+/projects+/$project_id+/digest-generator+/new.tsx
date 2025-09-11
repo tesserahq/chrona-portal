@@ -206,8 +206,6 @@ export async function action({ request }: ActionFunctionArgs) {
     token,
   } = Object.fromEntries(formData)
 
-  console.log('labels ', labels)
-
   const validated = digestGenerationConfigSchema.safeParse({
     title: title.toString(),
     system_prompt: system_prompt.toString(),

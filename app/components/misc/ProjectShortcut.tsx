@@ -108,7 +108,7 @@ export default function ProjectShortcut({ apiUrl, nodeEnv }: Props) {
 
                         setProject(project)
                         setOpen(false)
-                        navigate(`/projects/${id}/settings`)
+                        navigate(`/projects/${id}/entries`)
                       }}>
                       <div className="flex w-full items-center gap-2">
                         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-200 uppercase dark:bg-slate-600 dark:text-foreground">
