@@ -1,0 +1,50 @@
+---
+description: This rule use to integration API
+globs:
+alwaysApply: false
+---
+
+# API Integration Patterns
+
+## Fetch Utility
+
+- Use `fetchApi()` from [app/libraries/fetch.ts](mdc:app/libraries/fetch.ts) for all API calls
+- Function signature: `fetchApi(endpoint, token, node_env, options)`
+- Automatically includes authentication headers when token is provided
+- Handles error responses with proper status codes and messages
+- Logs cURL commands in development mode for debugging
+
+## Authentication
+
+- Use Bearer token authentication: `Authorization: Bearer ${token}`
+- Get token from `useApp()` hook
+- Include token in all authenticated API calls
+- Handle token expiration and refresh scenarios with `useHandleApiError()`
+
+## Environment Configuration
+
+- Use environment variables for API URLs: `process.env.API_URL`
+- Use `process.env.NODE_ENV` for environment-specific behavior
+- Configure different endpoints for development, staging, and production
+- Use proper environment variable validation
+
+## Data Fetching Patterns
+
+- Use `useState` for managing API response data
+- Implement loading states with `useState` flags
+- Use `useEffect` for triggering API calls when dependencies change
+- Handle both initial loading and subsequent data fetching
+
+## API Endpoints
+
+- Follow RESTful conventions for endpoint structure
+- Use dynamic route parameters for resource-specific endpoints
+- Include proper HTTP methods: GET, POST, PUT, DELETE
+- Use consistent header structure across all requests
+
+## Type Safety
+
+- Define proper TypeScript interfaces for API responses
+- Use typed response data in components
+- Validate API responses with Zod schemas when needed
+- Maintain type safety throughout the data flow

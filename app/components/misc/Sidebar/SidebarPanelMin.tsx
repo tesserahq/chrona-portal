@@ -28,7 +28,7 @@ export default function SidebarPanelMin({ menuItems }: ISidebarPanelProps) {
             <ul className={cn('sidebar-nav mt-2 space-y-1')}>
               {menuItems.map((item) => (
                 <>
-                  <li key={item.title}>
+                  <li key={item.title} className="overflow-hidden rounded">
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
                         <TooltipTrigger asChild>
