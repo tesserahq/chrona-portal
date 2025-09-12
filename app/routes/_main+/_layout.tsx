@@ -12,7 +12,15 @@ import { setProjectID, setWorkspaceID } from '@/libraries/storage'
 import '@/styles/customs/sidebar.css'
 import { cn } from '@/utils/misc'
 import { Outlet, useLoaderData, useNavigate, useParams } from '@remix-run/react'
-import { ChevronRight, Cog, File, FileChartLine, Settings, Users } from 'lucide-react'
+import {
+  ChevronRight,
+  ClipboardCheck,
+  Cog,
+  File,
+  FileChartLine,
+  Settings,
+  Users,
+} from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 export function loader() {
@@ -48,6 +56,11 @@ export default function Layout() {
       title: 'Entries',
       path: `/projects/${params.project_id}/entries`,
       icon: <File size={18} />,
+    },
+    {
+      title: 'Digests',
+      path: `/projects/${params.project_id}/digests`,
+      icon: <ClipboardCheck size={18} />,
     },
     {
       title: 'Digest Generator',
