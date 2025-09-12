@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import MarkdownRenderer from '@/components/misc/Markdown/MarkdownRender'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -117,11 +118,7 @@ export default function EntryDetailPage() {
         </CardHeader>
 
         <CardContent className="p-6 pt-0">
-          <div className="prose prose-sm max-w-none text-foreground">
-            <p className="whitespace-pre-line text-pretty leading-relaxed">
-              {entry.body}
-            </p>
-          </div>
+          <MarkdownRenderer>{entry.body}</MarkdownRenderer>
         </CardContent>
       </Card>
 
@@ -129,7 +126,7 @@ export default function EntryDetailPage() {
       <div className="coreui-card-center mt-4 space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <MessageSquare className="h-5 w-5" />
-          <span>Update Entry ({entry.entry_updates.length})</span>
+          <span>Comments ({entry.entry_updates.length})</span>
         </div>
 
         {entry.entry_updates.map((entryUpdate) => (
@@ -198,9 +195,7 @@ export default function EntryDetailPage() {
             </CardHeader>
 
             <CardContent className="p-6 pt-0">
-              <div className="prose prose-sm max-w-none text-foreground">
-                <p className="text-pretty leading-relaxed">{entryUpdate.body}</p>
-              </div>
+              <MarkdownRenderer>{entryUpdate.body}</MarkdownRenderer>
             </CardContent>
           </Card>
         ))}

@@ -69,7 +69,6 @@ export default function WorkspaceSetting() {
       setIdentifier(response.identifier)
       setLocked(response.locked || false)
       setLogo(JSON.parse(response.logo || '{}'))
-      console.log('response ', response)
       setQuoreWorkspaceId(response.quore_workspace_id)
     } catch (error: any) {
       handleApiError(error)
