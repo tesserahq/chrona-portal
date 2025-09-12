@@ -5,7 +5,7 @@
 export const SITE_CONFIG = {
   siteTitle: 'Chrona Portal',
   siteDescription: '',
-  siteUrl: 'https://app.estate-buddy.com',
+  siteUrl: '',
   siteImage: '/images/logo.png',
   favicon: '/favicon.ico',
 }

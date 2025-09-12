@@ -45,21 +45,6 @@ export default function Header({
     )
   }
 
-  // const apps = [
-  //   {
-  //     name: 'custos',
-  //     link: 'https://custos.estate-buddy.com?autologin=true',
-  //   },
-  //   {
-  //     name: 'vaulta',
-  //     link: 'https://vaulta.estate-buddy.com?autologin=true',
-  //   },
-  //   {
-  //     name: 'identies',
-  //     link: 'https://identies.estate-buddy.com?autologin=true',
-  //   },
-  // ]
-
   return (
     <>
       <nav className="header animate-slide-down print:hidden">
