@@ -48,7 +48,7 @@ export interface IEntry {
   updated_at: string
   source: IEntrySource
   source_author: IEntrySourceAuthor
-  comments: Comment[]
+  entry_updates: Comment[]
 }
 
 export interface IEntriesResponse {
