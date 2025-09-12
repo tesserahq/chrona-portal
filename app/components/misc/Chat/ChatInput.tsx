@@ -7,7 +7,6 @@ import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi, NodeENVType } from '@/libraries/fetch'
 import { getProjectID, getWorkspaceID } from '@/libraries/storage'
 import { IProject } from '@/types/project'
-import { IPrompt } from '@/types/prompts'
 import { useAuth0 } from '@auth0/auth0-react'
 import { useParams } from '@remix-run/react'
 import {
@@ -73,8 +72,8 @@ export default function ChatInput({
   const [userMessage, setUserMessage] = useState<string>('')
   const inputRef = useRef<any>()
   const [workspaceId, setWorkspaceId] = useState<string>('') // to update project selects
-  const [prompts, setPrompts] = useState<IPrompt[]>([])
-  const [promptSelected, setPromptSelected] = useState<IPrompt>()
+  const [prompts, setPrompts] = useState<any[]>([])
+  const [promptSelected, setPromptSelected] = useState<any>()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [showPrompt, setShowPrompt] = useState<boolean>(false)
   const [showPopover, setShowPopover] = useState<boolean>(false)
