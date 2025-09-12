@@ -1,19 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Header from '@/components/misc/Header'
 import { Alert, AlertTitle } from '@/components/ui/alert'
+import LogoSelectorDialog from '@/components/misc/Dialog/LogoSelector'
+import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useApp } from '@/context/AppContext'
 import { fetchApi } from '@/libraries/fetch'
 import { workspaceSchema } from '@/schemas/workspace'
-import {
-  avatarColors,
-  avatarName,
-  avatarVariants,
-  IWorkspaceLogo,
-} from '@/types/workspace'
+import { avatarColors, avatarName, IWorkspace, IWorkspaceLogo } from '@/types/workspace'
 import { formatString } from '@/utils/format-string'
-import { cn } from '@/utils/misc'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
 import {
@@ -23,32 +19,52 @@ import {
   useNavigation,
 } from '@remix-run/react'
 import Avatar from 'boring-avatars'
-import { FormField, FormWrapper } from 'core-ui'
-import { Check } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { FormField, FormSelect, FormWrapper } from 'core-ui'
+import { Edit3 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { useHandleApiError } from '@/hooks/useHandleApiError'
 
 export function loader() {
   const hostUrl = process.env.HOST_URL
   const nodeEnv = process.env.NODE_ENV
   const apiUrl = process.env.API_URL
+  const quoreApiUrl = process.env.QUORE_API_URL
 
-  return { hostUrl, nodeEnv, apiUrl }
+  return { hostUrl, nodeEnv, apiUrl, quoreApiUrl }
 }
 
 export default function WorkspaceCreate() {
-  const { hostUrl, apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { hostUrl, apiUrl, nodeEnv, quoreApiUrl } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const navigate = useNavigate()
   const navigation = useNavigation()
+  const handleApiError = useHandleApiError()
   const { token } = useApp()
   const [errorFields, setErrorFields] = useState<any>()
   const [identifier, setIdentifier] = useState<string>('')
   const [locked, setLocked] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [logo, setLogo] = useState<IWorkspaceLogo>({
     name: avatarName,
     variant: 'beam',
     colors: avatarColors[0],
   })
+  const [quoreWorkspace, setQuoreWorkspace] = useState<IWorkspace[]>([])
+  const [quoreWorkspaceId, setQuoreWorkspaceId] = useState<string>('')
+
+  const logoSelectorRef = useRef<React.ElementRef<typeof LogoSelectorDialog>>(null)
+
+  const getQuoreWorkspaces = async () => {
+    try {
+      const response = await fetchApi(`${quoreApiUrl}/workspaces`, token!, nodeEnv)
+
+      setQuoreWorkspace(response.data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const onCancel = () => navigate('/workspaces', { replace: true })
 
@@ -58,6 +74,10 @@ export default function WorkspaceCreate() {
       [fieldName]: value ? null : `${fieldName} is required`,
     }))
   }
+
+  useEffect(() => {
+    if (token) getQuoreWorkspaces()
+  }, [token])
 
   useEffect(() => {
     if (actionData?.errors) {
@@ -91,6 +111,7 @@ export default function WorkspaceCreate() {
 
               setIdentifier(identiferValue)
               onRemoveError('name', value)
+              onRemoveError('identifier', identiferValue)
             }}
           />
           <FormField
@@ -106,72 +127,44 @@ export default function WorkspaceCreate() {
               onRemoveError('identifier', value)
             }}
           />
+
           <FormField label="Description" name="description" type="textarea" />
+
+          <FormSelect
+            label="Quore Workspace"
+            name="quore_workspace_id"
+            loading={isLoading}
+            value={quoreWorkspaceId}
+            onValueChange={setQuoreWorkspaceId}
+            options={quoreWorkspace.map((workspace) => ({
+              label: workspace.name,
+              value: workspace.id,
+            }))}
+          />
+
           <div className="mt-3">
             <Label>Logo</Label>
-            <div className="rounded border border-input p-2">
-              {/* Color */}
-              <div className="mb-2 text-xs">Color</div>
-              <div className="flex flex-wrap items-center gap-3">
-                {avatarColors.map((colors, index) => (
-                  <div
-                    key={index}
-                    className={cn(
-                      'relative flex cursor-pointer items-center gap-0 overflow-hidden rounded border border-input p-0.5',
-                      JSON.stringify(logo.colors) === JSON.stringify(colors) &&
-                        'border-primary',
-                    )}
-                    onClick={() => setLogo({ ...logo, colors })}>
-                    {colors.map((bgColor, idx) => (
-                      <div
-                        key={idx}
-                        style={{ background: bgColor }}
-                        className={`h-10 w-5`}></div>
-                    ))}
-                    {JSON.stringify(logo.colors) === JSON.stringify(colors) && (
-                      <div className="absolute right-1 top-1 rounded-full bg-primary p-1 text-background">
-                        <Check size={12} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Type */}
-              <div className="my-2 text-xs">Type</div>
-              <div className="flex flex-wrap items-center gap-2">
-                {avatarVariants.map((type, index) => (
-                  <div
-                    key={index}
-                    className="relative flex cursor-pointer flex-col items-center gap-1 rounded-full p-0"
-                    onClick={() => setLogo({ ...logo, variant: type })}>
-                    <Avatar
-                      name={logo.name}
-                      size={40}
-                      variant={type as any}
-                      colors={logo.colors}
-                    />
-                    <span
-                      className={cn(
-                        'text-xs text-muted-foreground',
-                        logo.variant === type && 'font-medium text-primary',
-                      )}>
-                      {type}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Preview */}
-              <div className="mt-5 flex w-full flex-col items-center justify-center">
+            <div className="flex items-center justify-between rounded border border-input p-3">
+              <div className="flex items-center gap-3">
                 <Avatar
                   name={logo.name}
                   variant={logo.variant as any}
-                  size={150}
+                  size={40}
                   colors={logo.colors}
                 />
-                <div className="mb-3 mt-2 text-xs text-muted-foreground">Preview</div>
+                <div>
+                  <div className="text-sm font-medium">Workspace Logo</div>
+                  <div className="text-xs text-muted-foreground">{logo.variant}</div>
+                </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => logoSelectorRef.current?.onOpen(logo)}>
+                <Edit3 size={14} className="mr-2" />
+                Customize
+              </Button>
             </div>
           </div>
 
@@ -194,6 +187,8 @@ export default function WorkspaceCreate() {
           </div>
         </FormWrapper>
       </div>
+
+      <LogoSelectorDialog ref={logoSelectorRef} onLogoChange={setLogo} />
     </div>
   )
 }
@@ -202,7 +197,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const apiUrl = process.env.API_URL
   const nodeEnv = process.env.NODE_ENV
   const formData = await request.formData()
-  const { name, description, identifier, locked, token, logo } =
+  const { name, description, identifier, locked, token, logo, quore_workspace_id } =
     Object.fromEntries(formData)
 
   const validated = workspaceSchema.safeParse({
@@ -210,6 +205,7 @@ export async function action({ request }: ActionFunctionArgs) {
     description,
     identifier,
     locked: locked === 'on',
+    quore_workspace_id,
   })
 
   if (!validated.success) {
@@ -224,6 +220,7 @@ export async function action({ request }: ActionFunctionArgs) {
         description: description.toString(),
         identifier: identifier.toString(),
         locked: locked === 'on',
+        quore_workspace_id: quore_workspace_id.toString(),
         logo,
       }),
     })

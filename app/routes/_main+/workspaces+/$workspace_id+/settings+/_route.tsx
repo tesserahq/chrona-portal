@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import LogoSelectorDialog from '@/components/misc/Dialog/LogoSelector'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,21 +17,14 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { workspaceSchema } from '@/schemas/workspace'
-import {
-  avatarColors,
-  avatarName,
-  avatarVariants,
-  IWorkspace,
-  IWorkspaceLogo,
-} from '@/types/workspace'
+import { IWorkspace, IWorkspaceLogo } from '@/types/workspace'
 import { formatString } from '@/utils/format-string'
-import { cn } from '@/utils/misc'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigation, useParams } from '@remix-run/react'
 import Avatar from 'boring-avatars'
-import { FormField, FormWrapper } from 'core-ui'
-import { Check, Copy, TriangleAlert } from 'lucide-react'
+import { FormField, FormSelect, FormWrapper } from 'core-ui'
+import { Check, Copy, Edit3, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -38,11 +32,12 @@ export function loader() {
   return {
     apiUrl: process.env.API_URL,
     nodeEnv: process.env.NODE_ENV,
+    quoreApiUrl: process.env.QUORE_API_URL,
   }
 }
 
 export default function WorkspaceSetting() {
-  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { apiUrl, nodeEnv, quoreApiUrl } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const params = useParams()
   const navigation = useNavigation()
@@ -50,12 +45,17 @@ export default function WorkspaceSetting() {
   const [workspace, setWorkspace] = useState<IWorkspace>()
   const { token } = useApp()
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+  const [isLoadingQuoreWorkspaces, setIsLoadingQuoreWorkspaces] = useState<boolean>(true)
   const [errorFields, setErrorFields] = useState<any>()
   const [identifier, setIdentifier] = useState<string>('')
   const [locked, setLocked] = useState<boolean>(false)
   const [copied, setCopied] = useState<boolean>(false)
   const [logo, setLogo] = useState<IWorkspaceLogo>()
+  const [quoreWorkspaces, setQuoreWorkspaces] = useState<IWorkspace[]>([])
+  const [quoreWorkspaceId, setQuoreWorkspaceId] = useState<string>('')
+
+  const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+  const logoSelectorRef = useRef<React.ElementRef<typeof LogoSelectorDialog>>(null)
 
   const getWorkspaceDetail = async () => {
     try {
@@ -69,10 +69,24 @@ export default function WorkspaceSetting() {
       setIdentifier(response.identifier)
       setLocked(response.locked || false)
       setLogo(JSON.parse(response.logo || '{}'))
+      console.log('response ', response)
+      setQuoreWorkspaceId(response.quore_workspace_id)
     } catch (error: any) {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const getQuoreWorkspaces = async () => {
+    try {
+      const response = await fetchApi(`${quoreApiUrl}/workspaces`, token!, nodeEnv)
+
+      setQuoreWorkspaces(response.data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoadingQuoreWorkspaces(false)
     }
   }
 
@@ -94,7 +108,10 @@ export default function WorkspaceSetting() {
   }
 
   useEffect(() => {
-    if (token) getWorkspaceDetail()
+    if (token) {
+      getWorkspaceDetail()
+      getQuoreWorkspaces()
+    }
   }, [token])
 
   useEffect(() => {
@@ -181,71 +198,41 @@ export default function WorkspaceSetting() {
           defaultValue={workspace?.description}
         />
 
+        <FormSelect
+          label="Quore Workspace"
+          name="quore_workspace_id"
+          loading={isLoadingQuoreWorkspaces}
+          value={quoreWorkspaceId}
+          onValueChange={setQuoreWorkspaceId}
+          options={quoreWorkspaces.map((workspace) => ({
+            label: workspace.name,
+            value: workspace.id,
+          }))}
+        />
+
         <div className="mb-3">
           <Label>Logo</Label>
-          <div className="rounded border border-input p-2">
-            {/* Color */}
-            <div className="mb-2 text-xs">Color</div>
-            <div className="flex flex-wrap items-center gap-3">
-              {avatarColors.map((colors, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    'relative flex cursor-pointer items-center gap-0 overflow-hidden rounded border border-input p-0.5',
-                    JSON.stringify(logo?.colors) === JSON.stringify(colors) &&
-                      'border-primary',
-                  )}
-                  onClick={() => setLogo({ ...logo, colors } as IWorkspaceLogo)}>
-                  {colors.map((bgColor, idx) => (
-                    <div
-                      key={idx}
-                      style={{ background: bgColor }}
-                      className={`h-10 w-5`}></div>
-                  ))}
-                  {JSON.stringify(logo?.colors) === JSON.stringify(colors) && (
-                    <div className="absolute right-1 top-1 rounded-full bg-primary p-1 text-background">
-                      <Check size={12} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Type */}
-            <div className="my-2 text-xs">Type</div>
-            <div className="flex flex-wrap items-center gap-2">
-              {avatarVariants.map((type, index) => (
-                <div
-                  key={index}
-                  className="relative flex cursor-pointer flex-col items-center gap-1 rounded-full p-0"
-                  onClick={() => setLogo({ ...logo, variant: type } as IWorkspaceLogo)}>
-                  <Avatar
-                    name={logo?.name || avatarName}
-                    size={40}
-                    variant={type as any}
-                    colors={logo?.colors as any}
-                  />
-                  <span
-                    className={cn(
-                      'text-xs text-muted-foreground',
-                      logo?.variant === type && 'font-medium text-primary',
-                    )}>
-                    {type}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Preview */}
-            <div className="mt-5 flex w-full flex-col items-center justify-center">
+          <div className="flex items-center justify-between rounded border border-input p-3">
+            <div className="flex items-center gap-3">
               <Avatar
-                name={logo?.name || avatarName}
+                name={logo?.name || ''}
                 variant={logo?.variant as any}
-                size={150}
-                colors={logo?.colors as any}
+                size={40}
+                colors={logo?.colors || []}
               />
-              <div className="mb-3 mt-2 text-xs text-muted-foreground">Preview</div>
+              <div>
+                <div className="text-sm font-medium">Workspace Logo</div>
+                <div className="text-xs text-muted-foreground">{logo?.variant}</div>
+              </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => logoSelectorRef.current?.onOpen(logo!)}>
+              <Edit3 size={14} className="mr-2" />
+              Customize
+            </Button>
           </div>
         </div>
 
@@ -307,6 +294,8 @@ export default function WorkspaceSetting() {
           name: workspace?.name,
         }}
       />
+
+      <LogoSelectorDialog ref={logoSelectorRef} onLogoChange={setLogo} />
     </div>
   )
 }
@@ -315,8 +304,16 @@ export async function action({ request }: ActionFunctionArgs) {
   const apiUrl = process.env.API_URL
   const nodeEnv = process.env.NODE_ENV
   const formData = await request.formData()
-  const { name, description, identifier, locked, token, workspace_id, logo } =
-    Object.fromEntries(formData)
+  const {
+    name,
+    description,
+    identifier,
+    locked,
+    token,
+    workspace_id,
+    logo,
+    quore_workspace_id,
+  } = Object.fromEntries(formData)
 
   const url = `${apiUrl}/workspaces/${workspace_id}`
 
@@ -338,6 +335,7 @@ export async function action({ request }: ActionFunctionArgs) {
         description: description.toString(),
         identifier: identifier.toString(),
         locked: locked === 'on',
+        quore_workspace_id: quore_workspace_id.toString(),
         logo,
       }
 

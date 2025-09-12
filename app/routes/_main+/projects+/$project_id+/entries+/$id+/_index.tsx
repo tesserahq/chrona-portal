@@ -129,52 +129,52 @@ export default function EntryDetailPage() {
       <div className="coreui-card-center mt-4 space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <MessageSquare className="h-5 w-5" />
-          <span>Comments ({entry.comments.length})</span>
+          <span>Update Entry ({entry.entry_updates.length})</span>
         </div>
 
-        {entry.comments.map((comment) => (
-          <Card key={comment.id} className="border-border shadow-md">
+        {entry.entry_updates.map((entryUpdate) => (
+          <Card key={entryUpdate.id} className="border-border shadow-md">
             <CardHeader>
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage
                     src={
-                      comment.source_author.author.avatar_url ||
+                      entryUpdate.source_author.author.avatar_url ||
                       '/images/default-avatar.jpg'
                     }
-                    alt={comment.source_author.author.display_name}
+                    alt={entryUpdate.source_author.author.display_name}
                   />
                   <AvatarFallback>
-                    {comment.source_author.author.display_name.charAt(0)}
+                    {entryUpdate.source_author.author.display_name.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 space-y-3">
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     <span className="font-medium text-foreground">
-                      {comment.source_author.author.display_name}
+                      {entryUpdate.source_author.author.display_name}
                     </span>
                     <span className="text-muted-foreground">
-                      @{comment.source_author.author.email}
+                      @{entryUpdate.source_author.author.email}
                     </span>
                     <span className="text-muted-foreground">•</span>
                     <span className="text-muted-foreground">
-                      {format(comment.created_at, 'PPpp')}
+                      {format(entryUpdate.created_at, 'PPpp')}
                     </span>
-                    {comment.created_at !== comment.updated_at && (
+                    {entryUpdate.created_at !== entryUpdate.updated_at && (
                       <>
                         <span className="text-muted-foreground">•</span>
                         <span className="text-xs text-muted-foreground">
-                          edited {format(comment.updated_at, 'PPpp')}
+                          edited {format(entryUpdate.updated_at, 'PPpp')}
                         </span>
                       </>
                     )}
                   </div>
 
                   {/* Comment Labels */}
-                  {Object.entries(comment.labels).length > 0 && (
+                  {Object.entries(entryUpdate.labels).length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {Object.entries(comment.labels).map(([key, value]) => (
+                      {Object.entries(entryUpdate.labels).map(([key, value]) => (
                         <Badge key={key} variant="secondary">
                           {key}: {value}
                         </Badge>
@@ -183,10 +183,10 @@ export default function EntryDetailPage() {
                   )}
 
                   {/* Comment Tags */}
-                  {comment.tags.length > 0 && (
+                  {entryUpdate.tags.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1">
                       <Tag className="h-3 w-3 text-muted-foreground" />
-                      {comment.tags.map((tag, index) => (
+                      {entryUpdate.tags.map((tag, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
                           {tag}
                         </Badge>
@@ -199,7 +199,7 @@ export default function EntryDetailPage() {
 
             <CardContent className="p-6 pt-0">
               <div className="prose prose-sm max-w-none text-foreground">
-                <p className="text-pretty leading-relaxed">{comment.body}</p>
+                <p className="text-pretty leading-relaxed">{entryUpdate.body}</p>
               </div>
             </CardContent>
           </Card>
