@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/table'
 import { IPagingInfo } from '@/types/pagination'
 import { Pagination } from './Pagination'
+import { cn } from '@/utils/misc'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -44,7 +45,11 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="relative flex h-[calc(100vh-10rem)] flex-col overflow-hidden rounded border border-border bg-card">
+    <div
+      className={cn(
+        'relative flex flex-col overflow-hidden rounded border border-border bg-card',
+        meta && 'h-[calc(100vh-10rem)]',
+      )}>
       <div className="flex-1 overflow-hidden">
         <div className="no-scrollbar h-full overflow-y-auto">
           <Table>

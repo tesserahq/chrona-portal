@@ -70,7 +70,7 @@ export default function DigestGeneratorDetailPage() {
 
   return (
     <div className="coreui-content-center animate-slide-up">
-      <Card className="coreui-card-center border-border shadow-md">
+      <Card className="coreui-card-center">
         <CardHeader className="space-y-3">
           <h1 className="text-balance text-2xl font-bold text-foreground">
             {config.title}

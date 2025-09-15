@@ -141,26 +141,39 @@ export default function ImportRequestPage() {
           <Link
             to={`/projects/${params.project_id}/import-requests/${row.original.id}`}
             className="font-medium text-foreground hover:text-primary hover:underline">
-            <p className="">{row.original.source.name.slice(0, 20)}...</p>
+            <p>{row.original.source.name.slice(0, 30)}...</p>
           </Link>
         )
       },
     },
     {
       accessorKey: 'received_count',
-      header: 'Received Count',
+      header: '# of items',
+      size: 150,
+      cell: ({ row }) => {
+        return <span>{row.original.received_count}</span>
+      },
     },
     {
       accessorKey: 'success_count',
-      header: 'Success Count',
+      header: '# of imported items',
+      size: 180,
+      cell: ({ row }) => {
+        return <span>{row.original.success_count}</span>
+      },
     },
     {
       accessorKey: 'failure_count',
-      header: 'Failure Count',
+      header: '# of failed items',
+      size: 150,
+      cell: ({ row }) => {
+        return <span>{row.original.failure_count}</span>
+      },
     },
     {
       accessorKey: 'status',
       header: 'Status',
+      size: 130,
       cell: ({ row }) => {
         return <Badge variant="secondary">{row.original.status}</Badge>
       },
@@ -168,6 +181,7 @@ export default function ImportRequestPage() {
     {
       accessorKey: 'created_at',
       header: 'Created',
+      size: 120,
       cell: ({ row }) => {
         return <DatePreview label="Created At" date={row.original.created_at} />
       },
@@ -175,6 +189,7 @@ export default function ImportRequestPage() {
     {
       accessorKey: 'updated_at',
       header: 'Updated',
+      size: 120,
       cell: ({ row }) => {
         return <DatePreview label="Updated At" date={row.original.updated_at} />
       },
@@ -182,6 +197,7 @@ export default function ImportRequestPage() {
     {
       accessorKey: 'finished_at',
       header: 'Finished',
+      size: 120,
       cell: ({ row }) => {
         return <DatePreview label="Finished At" date={row.original.updated_at} />
       },

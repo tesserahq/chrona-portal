@@ -70,7 +70,7 @@ export default function EntryDetailPage() {
 
   return (
     <div className="coreui-content-center animate-slide-up">
-      <Card className="coreui-card-center border-border shadow-md">
+      <Card className="coreui-card-center">
         <CardHeader className="space-y-3">
           <h1 className="text-balance text-2xl font-bold text-foreground">
             {entry.title}
@@ -130,7 +130,7 @@ export default function EntryDetailPage() {
         </div>
 
         {entry.entry_updates.map((entryUpdate) => (
-          <Card key={entryUpdate.id} className="border-border shadow-md">
+          <Card key={entryUpdate.id}>
             <CardHeader>
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
