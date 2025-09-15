@@ -18,6 +18,7 @@ import {
   Cog,
   File,
   FileChartLine,
+  MonitorDown,
   Settings,
   Users,
 } from 'lucide-react'
@@ -66,6 +67,11 @@ export default function Layout() {
       title: 'Digest Generator',
       path: `/projects/${params.project_id}/digest-generator`,
       icon: <Cog size={18} />,
+    },
+    {
+      title: 'Import Requests',
+      path: `/projects/${params.project_id}/import-requests`,
+      icon: <MonitorDown size={18} />,
     },
     {
       title: 'Members',
