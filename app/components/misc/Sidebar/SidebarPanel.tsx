@@ -33,9 +33,8 @@ export default function SidebarPanel({ menuItems }: ISidebarPanelProps) {
           <div className="is-scrollbar-hidden grow overflow-y-auto">
             <ul className="sidebar-nav mt-2">
               {menuItems.map((item) => (
-                <>
+                <div key={item.path}>
                   <li
-                    key={item.path}
                     className={cn(
                       'flex items-center justify-between overflow-hidden rounded hover:bg-slate-50 dark:hover:bg-background',
                       (pathname === item.path || getActiveMenu(item.title)) &&
@@ -55,7 +54,7 @@ export default function SidebarPanel({ menuItems }: ISidebarPanelProps) {
                   {item.divider && (
                     <hr className="my-2 border-t border-slate-200 dark:border-slate-700" />
                   )}
-                </>
+                </div>
               ))}
             </ul>
           </div>

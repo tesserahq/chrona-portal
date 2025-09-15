@@ -17,7 +17,7 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { workspaceSchema } from '@/schemas/workspace'
-import { IWorkspace, IWorkspaceLogo } from '@/types/workspace'
+import { avatarColors, avatarName, IWorkspace, IWorkspaceLogo } from '@/types/workspace'
 import { formatString } from '@/utils/format-string'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
@@ -66,10 +66,10 @@ export default function WorkspaceSetting() {
       )
 
       setWorkspace(response)
-      setIdentifier(response.identifier)
-      setLocked(response.locked || false)
-      setLogo(JSON.parse(response.logo || '{}'))
-      setQuoreWorkspaceId(response.quore_workspace_id)
+      setIdentifier(response?.identifier)
+      setLocked(response?.locked || false)
+      setLogo(JSON.parse(response?.logo || '{}'))
+      setQuoreWorkspaceId(response?.quore_workspace_id)
     } catch (error: any) {
       handleApiError(error)
     } finally {
@@ -214,14 +214,23 @@ export default function WorkspaceSetting() {
           <div className="flex items-center justify-between rounded border border-input p-3">
             <div className="flex items-center gap-3">
               <Avatar
-                name={logo?.name || ''}
-                variant={logo?.variant as any}
+                name={logo?.name || avatarName}
+                variant={(logo?.variant as any) || 'beam'}
                 size={40}
-                colors={logo?.colors || []}
+                colors={logo?.colors || avatarColors[0]}
               />
               <div>
-                <div className="text-sm font-medium">Workspace Logo</div>
-                <div className="text-xs text-muted-foreground">{logo?.variant}</div>
+                <div className="mb-0.5 text-sm font-medium capitalize">
+                  {logo?.variant || 'beam'}
+                </div>
+                <div className="flex items-center">
+                  {logo?.colors.map((bgColor, idx) => (
+                    <div
+                      key={idx}
+                      style={{ background: bgColor }}
+                      className="h-4 w-4"></div>
+                  ))}
+                </div>
               </div>
             </div>
             <Button
