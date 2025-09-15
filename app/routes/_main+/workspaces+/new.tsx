@@ -153,8 +153,17 @@ export default function WorkspaceCreate() {
                   colors={logo.colors}
                 />
                 <div>
-                  <div className="text-sm font-medium">Workspace Logo</div>
-                  <div className="text-xs text-muted-foreground">{logo.variant}</div>
+                  <div className="mb-0.5 text-sm font-medium capitalize">
+                    {logo.variant}
+                  </div>
+                  <div className="flex items-center">
+                    {logo.colors.map((bgColor, idx) => (
+                      <div
+                        key={idx}
+                        style={{ background: bgColor }}
+                        className="h-4 w-4"></div>
+                    ))}
+                  </div>
                 </div>
               </div>
               <Button

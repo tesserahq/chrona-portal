@@ -27,8 +27,8 @@ export default function SidebarPanelMin({ menuItems }: ISidebarPanelProps) {
           <div className="is-scrollbar-hidden">
             <ul className={cn('sidebar-nav mt-2 space-y-1')}>
               {menuItems.map((item) => (
-                <>
-                  <li key={item.title} className="overflow-hidden rounded">
+                <div key={item.title}>
+                  <li className="overflow-hidden rounded">
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -50,7 +50,7 @@ export default function SidebarPanelMin({ menuItems }: ISidebarPanelProps) {
                   {item.divider && (
                     <hr className="my-2 border-t border-slate-200 dark:border-slate-700" />
                   )}
-                </>
+                </div>
               ))}
             </ul>
           </div>
