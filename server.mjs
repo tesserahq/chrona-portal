@@ -19,7 +19,14 @@ const viteDevServer =
     ? undefined
     : await import('vite').then((vite) =>
         vite.createServer({
-          server: { middlewareMode: true },
+          server: {
+            middlewareMode: true,
+            hmr: {
+              port: process.env.VITE_HMR_PORT
+                ? parseInt(process.env.VITE_HMR_PORT)
+                : undefined,
+            },
+          },
         }),
       )
 
