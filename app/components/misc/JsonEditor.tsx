@@ -104,8 +104,8 @@ export default function JSONEditor({ onChange, currentData, title }: IProps) {
   }, [labels])
 
   return (
-    <Card>
-      <CardContent className="border border-input py-5">
+    <Card className="shadow-none">
+      <CardContent className="py-5">
         {/* Add new label form */}
         <div className="mb-5">
           <div className="flex items-center gap-2">
@@ -147,8 +147,8 @@ export default function JSONEditor({ onChange, currentData, title }: IProps) {
           ) : (
             <div className="grid gap-2">
               {Object.entries(labels).map(([key, value]) => (
-                <Card key={key}>
-                  <CardContent className="flex items-center justify-between gap-3 border border-input p-2">
+                <Card key={key} className="shadow-none">
+                  <CardContent className="flex items-center justify-between gap-3 p-2">
                     {editingKey === key ? (
                       // Edit mode
                       <div className="flex flex-1 items-center gap-2">

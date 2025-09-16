@@ -126,7 +126,7 @@ export default function EntryDetailPage() {
       <div className="coreui-card-center mt-4 space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
           <MessageSquare className="h-5 w-5" />
-          <span>Comments ({entry.entry_updates.length})</span>
+          <span>Entry Updates ({entry.entry_updates.length})</span>
         </div>
 
         {entry.entry_updates.map((entryUpdate) => (
