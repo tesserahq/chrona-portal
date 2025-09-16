@@ -5,9 +5,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 export function LabelTooltip({
   labels,
   side = 'right',
+  title = 'Labels',
 }: {
   labels: any[]
   side?: 'top' | 'right' | 'bottom' | 'left'
+  title?: string
 }) {
   const truncateValue = (value: string, length = 20) => {
     return value.length > length ? `${value.slice(0, length)}...` : value
@@ -30,7 +32,7 @@ export function LabelTooltip({
           </Badge>
         </TooltipTrigger>
         <TooltipContent className="z-20 max-w-sm px-3 py-2" align="center" side={side}>
-          <h1 className="mb-2 font-medium">Labels</h1>
+          <h1 className="mb-2 font-medium">{title}</h1>
           <pre className="max-h-60 overflow-auto rounded bg-secondary p-2 text-xs leading-relaxed text-foreground">
             {JSON.stringify(labelsObject, null, 2)}
           </pre>

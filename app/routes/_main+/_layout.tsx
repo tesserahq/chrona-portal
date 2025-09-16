@@ -20,6 +20,7 @@ import {
   FileChartLine,
   MonitorDown,
   Settings,
+  UserLock,
   Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -95,6 +96,11 @@ export default function Layout() {
       title: 'Projects',
       path: `/workspaces/${params.workspace_id}/projects`,
       icon: <File size={18} />,
+    },
+    {
+      title: 'Authors',
+      path: `/workspaces/${params.workspace_id}/authors`,
+      icon: <UserLock size={18} />,
     },
     {
       title: 'Team',
