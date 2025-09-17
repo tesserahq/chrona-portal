@@ -1,11 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import EmptyContent from '@/components/misc/EmptyContent'
-import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
 import { Pagination } from '@/components/misc/Pagination'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent } from '@/components/ui/dialog'
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Tooltip,
   TooltipContent,
@@ -19,7 +23,7 @@ import { IDigest, IDigestPaginationResponse } from '@/types/digest'
 import { IPagingInfo } from '@/types/pagination'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { LoaderFunctionArgs } from '@remix-run/node'
-import { useLoaderData, useParams, useSearchParams } from '@remix-run/react'
+import { Link, useLoaderData, useParams, useSearchParams } from '@remix-run/react'
 import { format } from 'date-fns'
 import { Calendar, Tag } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -54,7 +58,6 @@ export default function DigestsPage() {
   })
   const { token } = useApp()
   const handleApiError = useHandleApiError()
-  const [digestBody, setDigestBody] = useState<string>('')
 
   const fetchDigests = async () => {
     try {
@@ -113,16 +116,18 @@ export default function DigestsPage() {
                 key={digest.id}
                 className="flex h-full flex-col overflow-hidden shadow-card transition-shadow hover:shadow-lg">
                 <CardHeader className="pb-3">
-                  <CardTitle className="line-clamp-2 text-lg">{digest.title}</CardTitle>
+                  <Link
+                    to={`/projects/${params.project_id}/digests/${digest.id}`}
+                    className="button-link">
+                    <CardTitle className="line-clamp-2 text-lg">{digest.title}</CardTitle>
+                  </Link>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
                     {format(digest.created_at, 'PP')}
                   </div>
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col px-6">
-                  <div
-                    className="mb-4 line-clamp-3 flex-1 cursor-pointer text-pretty leading-relaxed text-muted-foreground"
-                    onClick={() => setDigestBody(digest.body)}>
+                  <div className="mb-4 line-clamp-3 flex-1 text-pretty leading-relaxed text-muted-foreground">
                     {digest.body}
                   </div>
 
@@ -218,6 +223,9 @@ export default function DigestsPage() {
                     )}
                   </div>
                 </CardContent>
+                <CardFooter className="justify-end">
+                  {digest.status === 'draft' && <Badge>{digest.status}</Badge>}
+                </CardFooter>
               </Card>
             ))}
           </div>
@@ -226,14 +234,6 @@ export default function DigestsPage() {
           <div className="mt-8">
             <Pagination meta={pagination} />
           </div>
-
-          <Dialog open={!!digestBody} onOpenChange={() => setDigestBody('')}>
-            <DialogContent className="w-full !max-w-2xl">
-              <div className="max-h-[600px] overflow-x-scroll">
-                <MarkdownRenderer>{digestBody}</MarkdownRenderer>
-              </div>
-            </DialogContent>
-          </Dialog>
         </>
       )}
     </div>

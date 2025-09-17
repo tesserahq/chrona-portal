@@ -28,6 +28,7 @@ export interface IDigest {
   digest_generation_config_id: string
   project_id: string
   id: string
+  status: string
   created_at: string
   updated_at: string
   deleted_at: string

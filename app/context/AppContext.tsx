@@ -42,9 +42,7 @@ export function AppProvider({ children }: IProviderProps) {
     if (!isLoading && !isAuthenticated) {
       navigate('/', { replace: true })
       return
-      // navigate('/logout', { replace: true })
-      // return
-    } else {
+    } else if (isAuthenticated) {
       fetchToken()
     }
   }, [isLoading])
