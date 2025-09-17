@@ -198,7 +198,7 @@ export default function DigestGeneratorsPage() {
             <Tooltip>
               <TooltipTrigger>
                 <span className="block max-w-28 cursor-pointer truncate text-muted-foreground">
-                  {entry.system_prompt || 'No system prompt'}
+                  {entry.system_prompt}
                 </span>
               </TooltipTrigger>
               <TooltipContent className="max-w-lg" side="bottom">
@@ -273,18 +273,20 @@ export default function DigestGeneratorsPage() {
       size: 100,
       cell: ({ row }) => {
         const entry = row.original
+        const entryUtcDate = entry.created_at + 'Z'
+
         return (
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entry.created_at), new Date(), {
+                  {formatDistance(new Date(entryUtcDate), new Date(), {
                     includeSeconds: true,
                   })}
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <span>Created At {format(entry.created_at, 'PPpp')}</span>
+                <span>Created At {format(entryUtcDate, 'PPpp')}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -297,18 +299,20 @@ export default function DigestGeneratorsPage() {
       size: 100,
       cell: ({ row }) => {
         const entry = row.original
+        const entryUtcDate = entry.updated_at + 'Z'
+
         return (
           <TooltipProvider delayDuration={200}>
             <Tooltip>
               <TooltipTrigger>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entry.updated_at), new Date(), {
+                  {formatDistance(new Date(entryUtcDate), new Date(), {
                     includeSeconds: true,
                   })}
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <span>Updated At {format(entry.updated_at, 'PPpp')}</span>
+                <span>Updated At {format(entryUtcDate, 'PPpp')}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
