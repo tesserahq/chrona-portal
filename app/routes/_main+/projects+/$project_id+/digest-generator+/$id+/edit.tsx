@@ -164,6 +164,7 @@ export default function DigestGeneratorEdit() {
         labels,
         filter_tags: JSON.stringify(filterTags),
         filter_labels: filterLabels,
+        cron_expression: cronExpression,
       }}>
       <h3 className="mb-3 text-base font-semibold">General</h3>
       <Card className="shadow-none">
@@ -240,12 +241,6 @@ export default function DigestGeneratorEdit() {
           {/* Cron Expression */}
           <div className="mt-3">
             <Label>Cron Expression</Label>
-            <Input
-              name="cron_expression"
-              value={cronExpression}
-              className="mb-3"
-              readOnly
-            />
             <Cron value={cronExpression} setValue={setCronExpression} />
           </div>
 
