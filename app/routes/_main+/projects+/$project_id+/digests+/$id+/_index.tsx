@@ -109,18 +109,6 @@ export default function DigestDetailPage() {
               ))}
             </div>
           )}
-
-          {/* Digest Stats */}
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <span className="font-medium">Entries:</span>
-              <span>{digest?.entries_ids?.length}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="font-medium">Comments:</span>
-              <span>{digest?.comments_ids?.length}</span>
-            </div>
-          </div>
         </CardHeader>
 
         <CardContent className="p-6 pt-0">
