@@ -88,12 +88,12 @@ export default function EntryDetailPage() {
 
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
-              <span className="text-xs">Created {format(entry.created_at, 'PPpp')}</span>
+              <span className="text-xs">Created {format(entry.source_created_at, 'PPpp')}</span>
             </div>
 
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
-              <span className="text-xs">Updated {format(entry.updated_at, 'PPpp')}</span>
+              <span className="text-xs">Updated {format(entry.source_updated_at, 'PPpp')}</span>
             </div>
           </div>
 
@@ -156,13 +156,13 @@ export default function EntryDetailPage() {
                     </span>
                     <span className="text-muted-foreground">•</span>
                     <span className="text-muted-foreground">
-                      {format(entryUpdate.created_at, 'PPpp')}
+                      {format(entryUpdate.source_created_at, 'PPpp')}
                     </span>
-                    {entryUpdate.created_at !== entryUpdate.updated_at && (
+                    {entryUpdate.source_created_at !== entryUpdate.source_updated_at && (
                       <>
                         <span className="text-muted-foreground">•</span>
                         <span className="text-xs text-muted-foreground">
-                          edited {format(entryUpdate.updated_at, 'PPpp')}
+                          edited {format(entryUpdate.source_updated_at, 'PPpp')}
                         </span>
                       </>
                     )}
