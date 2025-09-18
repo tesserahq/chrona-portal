@@ -117,28 +117,32 @@ export default function GazetteDetailPage() {
             )}
           </div>
 
-          {/* Labels */}
-          {Object.keys(gazette.labels || {}).length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(gazette.labels || {}).map(([key, value]) => (
-                <Badge key={key} variant="secondary">
-                  {key}: {value}
-                </Badge>
-              ))}
-            </div>
-          )}
-
           {/* Tags */}
-          {(gazette.tags || []).length > 0 && (
-            <div className="flex flex-wrap items-center gap-1">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              {gazette.tags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          )}
+          <div className="mt-3">
+            {(gazette.tags || []).length > 0 && (
+              <div className="flex flex-wrap items-center gap-1">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                {gazette.tags.map((tag, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Labels */}
+          <div className="mt-3">
+            {Object.keys(gazette.labels || {}).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(gazette.labels || {}).map(([key, value]) => (
+                  <Badge key={key} variant="secondary">
+                    {key}: {value}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -180,7 +180,6 @@ export async function action({ request }: ActionFunctionArgs) {
     })
   } catch (error: any) {
     const convertError = JSON.parse(error?.message)
-    console.log('convertError ', convertError.error[0])
 
     return redirectWithToast(
       convertError.status === 401 ? '/logout' : `/projects/${project_id}/gazettes/new`,
