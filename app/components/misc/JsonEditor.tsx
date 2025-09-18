@@ -95,6 +95,7 @@ export default function JSONEditor({ onChange, currentData, title }: IProps) {
 
   const handleKeyPress = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === 'Enter') {
+      e.preventDefault()
       action()
     }
   }
@@ -114,7 +115,7 @@ export default function JSONEditor({ onChange, currentData, title }: IProps) {
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
                 placeholder="Key (e.g., app, version, my_name)"
-                onKeyDown={(e) => handleKeyPress(e, addLabel)}
+                onKeyPress={(e) => handleKeyPress(e, addLabel)}
               />
             </div>
             <span className="text-muted-foreground">:</span>
@@ -123,7 +124,7 @@ export default function JSONEditor({ onChange, currentData, title }: IProps) {
                 value={newValue}
                 onChange={(e) => setNewValue(e.target.value)}
                 placeholder="Value (e.g., frontend, 1.0.0, production)"
-                onKeyDown={(e) => handleKeyPress(e, addLabel)}
+                onKeyPress={(e) => handleKeyPress(e, addLabel)}
               />
             </div>
             <Button onClick={addLabel} variant="outline" type="button" size="sm">
