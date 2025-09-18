@@ -115,6 +115,21 @@ export default function EntryDetailPage() {
               </Badge>
             ))}
           </div>
+
+          {entry.source_assignee && (
+            <div className="mt-3 flex gap-1">
+              <span className="text-muted-foreground">Assignee: </span>
+              <User className="h-4 w-4" />
+              <span className="font-medium">
+                {entry.source_assignee?.author.display_name}
+              </span>
+              <span>@{entry.source_assignee?.author.email}</span>
+            </div>
+          )}
+          <div className="mt-3 flex gap-1">
+            <span className="text-muted-foreground">Source: </span>
+            <span className="font-medium">{entry.source.name}</span>
+          </div>
         </CardHeader>
 
         <CardContent className="p-6 pt-0">
