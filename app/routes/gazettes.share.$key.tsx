@@ -11,7 +11,6 @@ import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
 import { ArrowLeft, Calendar, Tag } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { dummyGazetteData } from '@/data/dummy-gazette-data'
 import Separator from '@/components/ui/separator'
 
 export function loader() {
@@ -34,18 +33,6 @@ export default function PublicGazetteSharePage() {
   const fetchSharedGazette = async () => {
     setIsLoading(true)
     setError('')
-
-    // Development flag - set to true to use dummy data
-    const USE_DUMMY_DATA = false
-
-    if (USE_DUMMY_DATA) {
-      // Use dummy data for development
-      setGazette(dummyGazetteData.gazette)
-      setDigests(dummyGazetteData.digests)
-      setSections(dummyGazetteData.sections)
-      setIsLoading(false)
-      return
-    }
 
     try {
       const url = `${apiUrl}/gazettes/share/${params.key}`
