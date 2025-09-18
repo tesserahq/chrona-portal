@@ -94,7 +94,8 @@ export default function PublicGazetteSharePage() {
           )}
           <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
             <Calendar className="h-4 w-4" />
-            <span>{format(new Date(gazette?.created_at), 'PPP')}</span>
+            <span>{format(new Date(gazette?.created_at), 'PPP')}</span>|
+            <span>{gazette.name}</span>
           </div>
         </div>
       </header>

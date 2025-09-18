@@ -157,6 +157,18 @@ export default function ProjectGazettesPage() {
       },
     },
     {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => {
+        const gazette = row.original
+        return (
+          <div className="max-w-[200px]">
+            <p className="truncate font-medium">{gazette.name}</p>
+          </div>
+        )
+      },
+    },
+    {
       accessorKey: 'header',
       header: 'Header',
       cell: ({ row }) => {
@@ -327,7 +339,7 @@ export default function ProjectGazettesPage() {
       <ModalDelete
         ref={deleteRef}
         alert="Gazette"
-        title={`Remove "${gazetteDelete?.header}" from gazettes`}
+        title={`Remove "${gazetteDelete?.name}" from gazettes`}
         data={{
           project_id: params.project_id,
           id: gazetteDelete?.id,
