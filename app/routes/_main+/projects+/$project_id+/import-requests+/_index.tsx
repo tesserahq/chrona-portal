@@ -4,7 +4,7 @@ import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import EmptyContent from '@/components/misc/EmptyContent'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/misc/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useApp } from '@/context/AppContext'
@@ -137,11 +137,14 @@ export default function ImportRequestPage() {
       size: 300,
       header: 'Source',
       cell: ({ row }) => {
+        const { source } = row.original
         return (
           <Link
             to={`/projects/${params.project_id}/import-requests/${row.original.id}`}
             className="font-medium text-foreground hover:text-primary hover:underline">
-            <p>{row.original.source.name.slice(0, 30)}...</p>
+            <p>
+              {source.name.length > 30 ? source.name.slice(0, 30) + '...' : source.name}
+            </p>
           </Link>
         )
       },
@@ -175,7 +178,7 @@ export default function ImportRequestPage() {
       header: 'Status',
       size: 130,
       cell: ({ row }) => {
-        return <Badge variant="secondary">{row.original.status}</Badge>
+        return <StatusBadge status={row.original.status} />
       },
     },
     {

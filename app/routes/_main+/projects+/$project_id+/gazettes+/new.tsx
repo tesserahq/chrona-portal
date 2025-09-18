@@ -69,12 +69,21 @@ export default function GazetteCreate() {
         tags: JSON.stringify(tags),
         labels,
       }}>
+      {/* Name */}
+      <FormField
+        label="Name"
+        name="name"
+        required
+        autoFocus
+        error={errorFields?.name}
+        onChange={(value) => onRemoveError('name', value)}
+      />
+
       {/* Header */}
       <FormField
         label="Header"
         name="header"
         required
-        autoFocus
         error={errorFields?.header}
         onChange={(value) => onRemoveError('header', value)}
       />
@@ -146,10 +155,11 @@ export async function action({ request }: ActionFunctionArgs) {
   const apiUrl = process.env.API_URL
   const nodeEnv = process.env.NODE_ENV
   const formData = await request.formData()
-  const { header, subheader, theme, tags, labels, project_id, token } =
+  const { name, header, subheader, theme, tags, labels, project_id, token } =
     Object.fromEntries(formData)
 
   const validated = gazetteSchema.safeParse({
+    name: name.toString(),
     header: header.toString(),
     subheader: subheader.toString(),
     theme: theme.toString(),

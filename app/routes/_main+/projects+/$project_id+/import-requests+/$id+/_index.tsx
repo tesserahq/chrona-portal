@@ -2,6 +2,7 @@ import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import PreviewJsonDialog from '@/components/misc/Dialog/PreviewJson'
+import { StatusBadge } from '@/components/misc/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -120,7 +121,7 @@ export default function ImportRequestDetailPage() {
               <h2 className="text-balance text-2xl font-bold text-foreground">
                 Import Request Detail
               </h2>
-              <Badge variant="secondary">{importRequest.status}</Badge>
+              <StatusBadge status={importRequest.status} />
             </div>
           </CardHeader>
           <CardContent className="space-y-6 px-6">
@@ -210,7 +211,7 @@ export default function ImportRequestDetailPage() {
             <CardTitle>Items</CardTitle>
           </CardHeader>
           <CardContent className="px-6">
-            <DataTable columns={columnDef} data={importRequest?.items || []} />
+            <DataTable columns={columnDef} data={importRequest?.items ?? []} />
           </CardContent>
         </Card>
       </div>

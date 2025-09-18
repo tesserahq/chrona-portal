@@ -3,6 +3,7 @@ import { IDigest } from './digest'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IGazette {
   id: string
+  name: string
   header: string
   subheader: string
   theme: string

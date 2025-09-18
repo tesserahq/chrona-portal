@@ -88,12 +88,16 @@ export default function EntryDetailPage() {
 
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
-              <span className="text-xs">Created {format(entry.source_created_at, 'PPpp')}</span>
+              <span className="text-xs">
+                Created {format(entry.source_created_at, 'PPpp')}
+              </span>
             </div>
 
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
-              <span className="text-xs">Updated {format(entry.source_updated_at, 'PPpp')}</span>
+              <span className="text-xs">
+                Updated {format(entry.source_updated_at, 'PPpp')}
+              </span>
             </div>
           </div>
 
@@ -114,6 +118,21 @@ export default function EntryDetailPage() {
                 {tag}
               </Badge>
             ))}
+          </div>
+
+          {entry.source_assignee && (
+            <div className="mt-3 flex gap-1">
+              <span className="text-muted-foreground">Assignee: </span>
+              <User className="h-4 w-4" />
+              <span className="font-medium">
+                {entry.source_assignee?.author.display_name}
+              </span>
+              <span>@{entry.source_assignee?.author.email}</span>
+            </div>
+          )}
+          <div className="mt-3 flex gap-1">
+            <span className="text-muted-foreground">Source: </span>
+            <span className="font-medium">{entry.source.name}</span>
           </div>
         </CardHeader>
 

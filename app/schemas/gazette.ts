@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const gazetteSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
   header: z.string().min(1, 'Header is required'),
   subheader: z.string(),
   theme: z.string(),

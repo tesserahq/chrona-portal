@@ -63,7 +63,7 @@ const DialogPreviewJson: React.ForwardRefRenderFunction<FuncProps, IProps> = (
         )}
         <div className="max-h-[600px] overflow-y-auto overflow-x-scroll">
           <MarkdownRenderer>
-            {`\`\`\`json\n${JSON.stringify({ debugResponse }, null, 2)}\n\`\`\``}
+            {`\`\`\`json\n${JSON.stringify({ ...debugResponse }, null, 2)}\n\`\`\``}
           </MarkdownRenderer>
         </div>
         <DialogFooter className="flex justify-end">

@@ -22,6 +22,16 @@ export interface IEntrySourceAuthor {
   author: IEntryAuthor
 }
 
+export interface IEntrySourceAssignee {
+  author_id: string
+  source_id: string
+  source_author_id: string
+  id: string
+  created_at: string
+  updated_at: string
+  author: IEntryAuthor
+}
+
 export interface IEntrySource {
   name: string
   description: string
@@ -42,6 +52,7 @@ export interface IEntry {
   labels: Record<string, string>
   meta_data: Record<string, unknown>
   source_author_id: string
+  source_assignee_id: string
   project_id: string
   id: string
   created_at: string // ISO date string
@@ -50,6 +61,7 @@ export interface IEntry {
   source_updated_at: string // ISO date string
   source: IEntrySource
   source_author: IEntrySourceAuthor
+  source_assignee: IEntrySourceAssignee
   entry_updates: Comment[]
 }
 

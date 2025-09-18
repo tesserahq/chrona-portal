@@ -150,7 +150,9 @@ export default function ProjectEntriesPage() {
                 <p className="truncate">{entry.title}</p>
               </Link>
               <p className="truncate text-xs text-muted-foreground">
-                {entry.body.substring(0, 100)}...
+                {entry.body && entry.body.length > 100
+                  ? entry.body.substring(0, 100) + '...'
+                  : entry.body}
               </p>
             </div>
           </div>
@@ -221,9 +223,6 @@ export default function ProjectEntriesPage() {
         return (
           <div className="max-w-[200px]">
             <p className="truncate text-sm font-medium">{entry.source.name}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {entry.source.description}
-            </p>
           </div>
         )
       },
@@ -241,6 +240,26 @@ export default function ProjectEntriesPage() {
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {entry.source_author.author.email}
+              </p>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'source_assignee.author.display_name',
+      header: 'Assignee',
+      cell: ({ row }) => {
+        const entry = row.original
+
+        return (
+          <div className="flex items-center gap-2">
+            <div className="max-w-[150px]">
+              <p className="truncate text-sm font-medium">
+                {entry?.source_assignee?.author?.display_name}
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                {entry?.source_assignee?.author?.email}
               </p>
             </div>
           </div>
