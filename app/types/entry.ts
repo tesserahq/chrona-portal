@@ -44,8 +44,10 @@ export interface IEntry {
   source_author_id: string
   project_id: string
   id: string
-  created_at: string
-  updated_at: string
+  created_at: string // ISO date string
+  updated_at: string // ISO date string
+  source_created_at: string // ISO date string
+  source_updated_at: string // ISO date string
   source: IEntrySource
   source_author: IEntrySourceAuthor
   entry_updates: Comment[]
@@ -66,6 +68,8 @@ export interface Comment {
   id: string
   created_at: string // ISO date string
   updated_at: string // ISO date string
+  source_created_at: string // ISO date string
+  source_updated_at: string // ISO date string
   source_author: SourceAuthor
 }
 
