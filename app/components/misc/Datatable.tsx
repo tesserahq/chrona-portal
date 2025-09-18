@@ -24,6 +24,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   meta?: IPagingInfo
   empty?: React.ReactNode
+  fixed?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -31,6 +32,7 @@ export function DataTable<TData, TValue>({
   data,
   meta,
   empty,
+  fixed = true,
 }: DataTableProps<TData, TValue>) {
   const table = useReactTable({
     data,
@@ -48,7 +50,7 @@ export function DataTable<TData, TValue>({
     <div
       className={cn(
         'relative flex flex-col overflow-hidden rounded border border-border bg-card',
-        meta && 'h-[calc(100vh-10rem)]',
+        fixed && 'h-[calc(100vh-10rem)]',
       )}>
       <div className="flex-1 overflow-hidden">
         <div className="no-scrollbar h-full overflow-y-auto">
