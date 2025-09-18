@@ -88,12 +88,16 @@ export default function EntryDetailPage() {
 
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
-              <span className="text-xs">Created {format(entry.source_created_at, 'PPpp')}</span>
+              <span className="text-xs">
+                Created {format(entry.source_created_at, 'PPpp')}
+              </span>
             </div>
 
             <div className="flex items-center gap-1">
               <CalendarDays size={12} />
-              <span className="text-xs">Updated {format(entry.source_updated_at, 'PPpp')}</span>
+              <span className="text-xs">
+                Updated {format(entry.source_updated_at, 'PPpp')}
+              </span>
             </div>
           </div>
 

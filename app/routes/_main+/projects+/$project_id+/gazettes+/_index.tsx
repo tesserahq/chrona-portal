@@ -163,7 +163,11 @@ export default function ProjectGazettesPage() {
         const gazette = row.original
         return (
           <div className="max-w-[200px]">
-            <p className="truncate font-medium">{gazette.name}</p>
+            <Link
+              to={`/projects/${params.project_id}/gazettes/${gazette.id}`}
+              className="font-medium text-foreground hover:text-primary hover:underline">
+              <p className="truncate font-medium">{gazette.name}</p>
+            </Link>
           </div>
         )
       },
@@ -176,11 +180,7 @@ export default function ProjectGazettesPage() {
         return (
           <div className="flex items-center gap-2">
             <div className="max-w-[300px]">
-              <Link
-                to={`/projects/${params.project_id}/gazettes/${gazette.id}`}
-                className="font-medium text-foreground hover:text-primary hover:underline">
-                <p className="truncate">{gazette.header}</p>
-              </Link>
+              <p className="truncate font-semibold">{gazette.header}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {gazette.subheader}
               </p>
