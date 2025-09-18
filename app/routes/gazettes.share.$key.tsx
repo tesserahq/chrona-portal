@@ -94,8 +94,7 @@ export default function PublicGazetteSharePage() {
           )}
           <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
             <Calendar className="h-4 w-4" />
-            <span>{format(new Date(gazette?.created_at), 'PPP')}</span>|
-            <span>{gazette.name}</span>
+            <span>{format(new Date(gazette?.created_at), 'PPP')}</span>
           </div>
         </div>
       </header>
@@ -145,10 +144,6 @@ export default function PublicGazetteSharePage() {
                               <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
                                 <Calendar className="h-3 w-3" />
                                 {format(digest.created_at, 'PPP')} |
-                                <span>
-                                  From {format(digest.from_date, 'PP')} to{' '}
-                                  {format(digest.to_date, 'PP')}
-                                </span>
                               </div>
                             </div>
                             {/* body */}
@@ -197,9 +192,7 @@ export default function PublicGazetteSharePage() {
           {/* Digest */}
           {digests.length > 0 && (
             <>
-              <h2 className="font-playfair mb-5 text-3xl font-bold text-gray-900">
-                Digests
-              </h2>
+              
               <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 {digests.map((digest) => {
                   return (
@@ -213,11 +206,7 @@ export default function PublicGazetteSharePage() {
                         </h3>
                         <div className="mt-2 flex items-center gap-1 text-xs text-gray-400">
                           <Calendar className="h-3 w-3" />
-                          {format(digest.created_at, 'PPP')} |
-                          <span>
-                            From {format(digest.from_date, 'PP')} to{' '}
-                            {format(digest.to_date, 'PP')}
-                          </span>
+                          {format(digest.created_at, 'PPP')}
                         </div>
                       </div>
                       {/* body */}
