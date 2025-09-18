@@ -19,6 +19,7 @@ const customColors = {
   'dark-secondary': '#2A3040',
   navy: navyColor,
   'slate-150': '#f2f2f7',
+  gazette: '#e91e63',
 }
 
 const config = {
@@ -44,6 +45,8 @@ const config = {
         sans: ['Poppins', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         geist: ['Geist', 'sans-serif'],
+        sourceSans3: ['Source Sans 3', 'sans-serif'],
+        playfair: ['Playfair Display', 'serif'],
       },
       fontSize: {
         tiny: ['0.625rem', '0.8125rem'],

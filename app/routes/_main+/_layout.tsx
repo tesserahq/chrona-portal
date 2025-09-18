@@ -19,6 +19,7 @@ import {
   File,
   FileChartLine,
   MonitorDown,
+  Newspaper,
   Settings,
   UserLock,
   Users,
@@ -73,6 +74,11 @@ export default function Layout() {
       title: 'Import Requests',
       path: `/projects/${params.project_id}/import-requests`,
       icon: <MonitorDown size={18} />,
+    },
+    {
+      title: 'Gazettes',
+      path: `/projects/${params.project_id}/gazettes`,
+      icon: <Newspaper size={18} />,
     },
     {
       title: 'Members',
