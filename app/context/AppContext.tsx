@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState } from 'react'
+import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { useAuth0, User } from '@auth0/auth0-react'
 import { useNavigate } from '@remix-run/react'
-import { useHandleApiError } from '@/hooks/useHandleApiError'
+import React, { useEffect, useState } from 'react'
 
 export interface IContextProps {
   user: User | null

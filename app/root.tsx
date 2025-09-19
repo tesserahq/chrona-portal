@@ -1,38 +1,37 @@
+import { Auth0Provider } from '@auth0/auth0-react'
+import type { LinksFunction, LoaderFunctionArgs, TypedResponse } from '@remix-run/node'
 import {
+  data,
   Links,
   Meta,
   MetaFunction,
   Outlet,
   Scripts,
   ScrollRestoration,
-  data,
   useLoaderData,
   useNavigate,
 } from '@remix-run/react'
-import type { LinksFunction, LoaderFunctionArgs, TypedResponse } from '@remix-run/node'
 import { useChangeLanguage } from 'remix-i18next/react'
-import { Auth0Provider } from '@auth0/auth0-react'
 import { AuthenticityTokenProvider } from 'remix-utils/csrf/react'
 
 // Import global CSS styles for the application
 // The ?url query parameter tells the bundler to handle this as a URL import
-import RootCSS from '@/styles/root.css?url'
-import SpinnerCSS from '@/styles/customs/spinner.css?url'
-import CoreUILayoutCSS from 'node_modules/core-ui/src/styles/layout.css?url'
+import { ClientHintCheck } from '@/components/misc/ClientHints'
+import { GenericErrorBoundary } from '@/components/misc/ErrorBoundary'
+import { Toaster } from '@/components/ui/sonner'
 import { SITE_CONFIG } from '@/constants/brand'
+import { getHints } from '@/hooks/useHints'
+import { useNonce } from '@/hooks/useNonce'
+import { getTheme, Theme, useTheme } from '@/hooks/useTheme'
+import { useToast } from '@/hooks/useToast'
+import i18nServer, { localeCookie } from '@/modules/i18n/i18n.server'
+import SpinnerCSS from '@/styles/customs/spinner.css?url'
+import RootCSS from '@/styles/root.css?url'
+import { csrf } from '@/utils/csrf.server'
 import { combineHeaders, getDomainUrl } from '@/utils/misc.server'
 import { getToastSession } from '@/utils/toast.server'
-import { csrf } from '@/utils/csrf.server'
-import { getHints } from '@/hooks/useHints'
-import { getTheme, Theme, useTheme } from '@/hooks/useTheme'
-import i18nServer, { localeCookie } from '@/modules/i18n/i18n.server'
-import { Toaster } from '@/components/ui/sonner'
-import { ClientHintCheck } from '@/components/misc/ClientHints'
-import { useNonce } from '@/hooks/useNonce'
-import { useToast } from '@/hooks/useToast'
-import { GenericErrorBoundary } from '@/components/misc/ErrorBoundary'
+import CoreUILayoutCSS from 'node_modules/core-ui/src/styles/layout.css?url'
 import { ProgressBar } from './components/misc/ProgressBar'
-import { AppProvider } from './context/AppContext'
 
 export const handle = { i18n: ['translation'] }
 
@@ -171,7 +170,6 @@ export default function AppWithProviders() {
         <Auth0Provider
           domain={domain ?? ''}
           clientId={clientID ?? ''}
-          // useRefreshTokens={true}
           onRedirectCallback={() => {
             navigate(hostUrl || 'http://localhost:3000')
           }}
@@ -180,9 +178,7 @@ export default function AppWithProviders() {
             organization: organizationID,
             audience: audience,
           }}>
-          <AppProvider>
-            <Outlet />
-          </AppProvider>
+          <Outlet />
         </Auth0Provider>
       </AuthenticityTokenProvider>
     </Document>
