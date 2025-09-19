@@ -328,7 +328,7 @@ export default function PublicGazetteSharePage() {
                           : 'border-gray-100 bg-white'
                       }`}
                       style={{
-                        borderLeft: `4px solid ${currentColorTheme?.primary || digest.ui_format?.color}`,
+                        borderLeft: `4px solid ${digest.ui_format?.color}`,
                       }}>
                       {/* Tags */}
                       {digest.tags.length > 0 && (
