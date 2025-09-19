@@ -269,7 +269,8 @@ export default function PublicGazetteSharePage() {
       <nav
         className="flex items-center justify-center gap-2 py-3"
         style={{
-          backgroundColor: currentColorTheme?.primary || digests[0]?.ui_format?.color,
+          backgroundColor:
+            currentColorTheme?.primary || digests[0]?.ui_format?.color || '#ff8f52',
         }}>
         {gazette.tags && gazette.tags.length > 0 && (
           <>
@@ -286,137 +287,147 @@ export default function PublicGazetteSharePage() {
       </nav>
 
       {/* Content */}
-      <div className="container mx-auto grid grid-cols-1 gap-8 px-4 pb-8 lg:grid-cols-3">
-        {/* Display digests grouped by date */}
-        <div className="col-span-1 lg:col-span-2">
-          {Object.keys(digestGrouped).map((date) => (
-            <div key={date} id={`date-group-${date}`} className="pt-5">
-              {/* Date Header */}
-              <div className="mb-6 flex items-center justify-between gap-3">
-                <h2 className="font-playfair text-2xl font-bold text-gray-900 dark:text-white">
-                  {format(new Date(date), 'EEEE, MMMM do, yyyy')}
-                </h2>
-                <Separator orientation="horizontal" className="flex-1" />
-                <Badge variant="secondary">
-                  {digestGrouped[date].length} update
-                  {digestGrouped[date].length !== 1 ? 's' : ''}
-                </Badge>
-              </div>
+      {Object.keys(digestGrouped).length === 0 ? (
+        <EmptyContent
+          image="/images/empty-digest.png"
+          title="No digests found"
+          description="No digests have been created yet for this gazette"
+        />
+      ) : (
+        <div className="container mx-auto grid grid-cols-1 gap-8 px-4 pb-8 lg:grid-cols-3">
+          {/* Display digests grouped by date */}
+          <div className="col-span-1 lg:col-span-2">
+            {Object.keys(digestGrouped).map((date) => (
+              <div key={date} id={`date-group-${date}`} className="pt-5">
+                {/* Date Header */}
+                <div className="mb-6 flex items-center justify-between gap-3">
+                  <h2 className="font-playfair text-2xl font-bold text-gray-900 dark:text-white">
+                    {format(new Date(date), 'EEEE, MMMM do, yyyy')}
+                  </h2>
+                  <Separator orientation="horizontal" className="flex-1" />
+                  <Badge variant="secondary">
+                    {digestGrouped[date].length} update
+                    {digestGrouped[date].length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
 
-              {/* Digests Columns */}
-              <div
-                className={cn(
-                  digestGrouped[date].length > 2
-                    ? 'lg:columns-2'
-                    : 'grid gap-4 lg:grid-cols-2',
-                )}>
-                {digestGrouped[date].map((digest) => (
-                  <div
-                    key={digest.id}
-                    className={`mb-4 inline-block h-fit rounded-lg border p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                      isDark ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-white'
-                    }`}
-                    style={{
-                      borderLeft: `4px solid ${currentColorTheme?.primary || digest.ui_format?.color}`,
-                    }}>
-                    {/* Tags */}
-                    {digest.tags.length > 0 && (
-                      <div className="mb-2 flex flex-wrap gap-1">
-                        {digest.tags.map((tag, index) => (
-                          <Badge key={index} variant="secondary">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Title */}
-                    <h3 className="mb-3 font-playfair text-xl font-semibold leading-tight text-gray-900 dark:text-white">
-                      {digest.title}
-                    </h3>
-
-                    {/* Date */}
+                {/* Digests Columns */}
+                <div
+                  className={cn(
+                    digestGrouped[date].length > 2
+                      ? 'lg:columns-2'
+                      : 'grid gap-4 lg:grid-cols-2',
+                  )}>
+                  {digestGrouped[date].map((digest) => (
                     <div
-                      className={`mb-4 flex items-center gap-1 text-xs ${
-                        isDark ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
-                      <Calendar className="h-4 w-4" />
-                      {format(digest.created_at, 'PPP')}
-                    </div>
-
-                    {/* Content */}
-                    <div
-                      className={`0 mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                      {digest.body}
-                    </div>
-
-                    {/* Labels */}
-                    {Object.entries(digest.labels).length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {Object.entries(digest.labels).map(([key, value], index) => (
-                          <Badge key={index} variant="outline">
-                            {key}:{' '}
-                            {typeof value === 'object'
-                              ? JSON.stringify(value)
-                              : String(value)}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {digest.status === 'draft' && (
-                      <div className="mt-4 flex justify-end">
-                        <Badge>{digest.status}</Badge>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Timeline Sidebar */}
-        <div className="col-span-1">
-          <div className="sticky top-0 pt-5">
-            <div className="relative">
-              <h3 className="mb-6 font-playfair text-xl font-bold text-gray-900 dark:text-white">
-                News Timeline
-              </h3>
-              <div className="absolute bottom-0 left-[15px] top-12 w-0.5 bg-gray-300 dark:bg-gray-600"></div>
-
-              {Object.keys(digestGrouped).length > 0 && (
-                <div className="space-y-6">
-                  {Object.keys(digestGrouped).map((date) => (
-                    <button
-                      key={date}
-                      onClick={() => {
-                        handleDateSelect(date)
-                        scrollToDate(date)
-                      }}
-                      className="relative w-full">
-                      <button
-                        className={cn(
-                          'absolute left-2 h-4 w-4 rounded-full border-2 border-white bg-gray-200 shadow-md transition-all hover:scale-110 dark:bg-gray-500',
-                          selectedDate === date && 'bg-blue-500 dark:bg-blue-700',
-                        )}></button>
-                      <div className="ml-10 text-left font-medium transition-opacity hover:opacity-80">
-                        <div className="font-medium text-gray-700 dark:text-gray-300">
-                          {format(new Date(date), 'EEEE, MMMM do')}
+                      key={digest.id}
+                      className={`mb-4 inline-block h-fit rounded-lg border p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
+                        isDark
+                          ? 'border-gray-700 bg-gray-800'
+                          : 'border-gray-100 bg-white'
+                      }`}
+                      style={{
+                        borderLeft: `4px solid ${currentColorTheme?.primary || digest.ui_format?.color}`,
+                      }}>
+                      {/* Tags */}
+                      {digest.tags.length > 0 && (
+                        <div className="mb-2 flex flex-wrap gap-1">
+                          {digest.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary">
+                              {tag}
+                            </Badge>
+                          ))}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {digestGrouped[date].length} update
-                          {digestGrouped[date].length !== 1 ? 's' : ''}
-                        </div>
+                      )}
+
+                      {/* Title */}
+                      <h3 className="mb-3 font-playfair text-xl font-semibold leading-tight text-gray-900 dark:text-white">
+                        {digest.title}
+                      </h3>
+
+                      {/* Date */}
+                      <div
+                        className={`mb-4 flex items-center gap-1 text-xs ${
+                          isDark ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                        <Calendar className="h-4 w-4" />
+                        {format(digest.created_at, 'PPP')}
                       </div>
-                    </button>
+
+                      {/* Content */}
+                      <div
+                        className={`0 mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                        {digest.body}
+                      </div>
+
+                      {/* Labels */}
+                      {Object.entries(digest.labels).length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {Object.entries(digest.labels).map(([key, value], index) => (
+                            <Badge key={index} variant="outline">
+                              {key}:{' '}
+                              {typeof value === 'object'
+                                ? JSON.stringify(value)
+                                : String(value)}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      {digest.status === 'draft' && (
+                        <div className="mt-4 flex justify-end">
+                          <Badge>{digest.status}</Badge>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
-              )}
+              </div>
+            ))}
+          </div>
+
+          {/* Timeline Sidebar */}
+          <div className="col-span-1">
+            <div className="sticky top-0 pt-5">
+              <div className="relative">
+                <h3 className="mb-6 font-playfair text-xl font-bold text-gray-900 dark:text-white">
+                  News Timeline
+                </h3>
+                <div className="absolute bottom-0 left-[15px] top-12 w-0.5 bg-gray-300 dark:bg-gray-600"></div>
+
+                {Object.keys(digestGrouped).length > 0 && (
+                  <div className="space-y-6">
+                    {Object.keys(digestGrouped).map((date) => (
+                      <button
+                        key={date}
+                        onClick={() => {
+                          handleDateSelect(date)
+                          scrollToDate(date)
+                        }}
+                        className="relative w-full">
+                        <button
+                          className={cn(
+                            'absolute left-2 h-4 w-4 rounded-full border-2 border-white bg-gray-200 shadow-md transition-all hover:scale-110 dark:bg-gray-500',
+                            selectedDate === date && 'bg-blue-500 dark:bg-blue-700',
+                          )}></button>
+                        <div className="ml-10 text-left font-medium transition-opacity hover:opacity-80">
+                          <div className="font-medium text-gray-700 dark:text-gray-300">
+                            {format(new Date(date), 'EEEE, MMMM do')}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {digestGrouped[date].length} update
+                            {digestGrouped[date].length !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
