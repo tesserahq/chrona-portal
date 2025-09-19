@@ -32,6 +32,9 @@ export interface IDigest {
   created_at: string
   updated_at: string
   deleted_at: string
+  ui_format?: {
+    color?: string
+  }
 }
 
 export interface IDigestPaginationResponse {

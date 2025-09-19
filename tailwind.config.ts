@@ -19,7 +19,6 @@ const customColors = {
   'dark-secondary': '#2A3040',
   navy: navyColor,
   'slate-150': '#f2f2f7',
-  gazette: '#e91e63',
 }
 
 const config = {

@@ -21,12 +21,13 @@ export interface IShareResponse {
 }
 
 export interface ISection {
-  id: string
+  name: string
   header: string
   subheader: string
   tags: string[]
   labels: Record<string, any>
   gazette_id: string
+  id: string
   created_at: string
   updated_at: string
   deleted_at: string | null
