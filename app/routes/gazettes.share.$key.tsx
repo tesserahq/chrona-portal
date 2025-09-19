@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import EmptyContent from '@/components/misc/EmptyContent'
+import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -357,7 +358,7 @@ export default function PublicGazetteSharePage() {
                       {/* Content */}
                       <div
                         className={`0 mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                        {digest.body}
+                        <MarkdownRenderer>{digest.body}</MarkdownRenderer>
                       </div>
 
                       {/* Labels */}
