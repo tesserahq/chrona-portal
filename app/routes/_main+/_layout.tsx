@@ -17,6 +17,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Cog,
+  Database,
   File,
   FileChartLine,
   MonitorDown,
@@ -108,6 +109,11 @@ export default function Layout() {
       title: 'Authors',
       path: `/workspaces/${params.workspace_id}/authors`,
       icon: <UserLock size={18} />,
+    },
+    {
+      title: 'Sources',
+      path: `/workspaces/${params.workspace_id}/sources`,
+      icon: <Database size={18} />,
     },
     {
       title: 'Team',
