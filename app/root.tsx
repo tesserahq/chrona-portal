@@ -10,6 +10,7 @@ import {
   ScrollRestoration,
   useLoaderData,
   useNavigate,
+  useParams,
 } from '@remix-run/react'
 import { useChangeLanguage } from 'remix-i18next/react'
 import { AuthenticityTokenProvider } from 'remix-utils/csrf/react'
@@ -32,6 +33,7 @@ import { combineHeaders, getDomainUrl } from '@/utils/misc.server'
 import { getToastSession } from '@/utils/toast.server'
 import CoreUILayoutCSS from 'node_modules/core-ui/src/styles/layout.css?url'
 import { ProgressBar } from './components/misc/ProgressBar'
+import { AppProvider } from './context/AppContext'
 
 export const handle = { i18n: ['translation'] }
 
@@ -156,8 +158,8 @@ export default function AppWithProviders() {
   const nonce = useNonce()
   const theme = useTheme()
   const navigate = useNavigate()
+  const params = useParams()
 
-  // Updates the i18n instance language.
   useChangeLanguage(locale)
 
   // Renders toast (if any).
@@ -178,7 +180,14 @@ export default function AppWithProviders() {
             organization: organizationID,
             audience: audience,
           }}>
-          <Outlet />
+          {/* To check if the route is a public gazette share page */}
+          {!params.gazette_key ? (
+            <AppProvider>
+              <Outlet />
+            </AppProvider>
+          ) : (
+            <Outlet />
+          )}
         </Auth0Provider>
       </AuthenticityTokenProvider>
     </Document>
