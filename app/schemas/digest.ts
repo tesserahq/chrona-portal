@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const digestGenerationConfigSchema = z.object({
   title: z.string().min(1, 'Title should have at least 1 character'),
+  query: z.string().min(1, 'Query should have at least 1 character'),
   tags: z.array(z.string()).optional().default([]),
   labels: z.record(z.any()),
   filter_tags: z.array(z.string()).optional().default([]),

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IDigestGenerator {
   title: string
+  query: string
   filter_tags: string[]
   filter_labels: Record<string, any>
   tags: string[]
@@ -14,6 +15,7 @@ export interface IDigestGenerator {
   created_at: string
   updated_at: string
   deleted_at: string
+  ui_format: any
 }
 
 export interface IDigest {

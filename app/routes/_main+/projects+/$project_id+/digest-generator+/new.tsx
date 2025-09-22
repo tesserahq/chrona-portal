@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import JSONEditor from '@/components/misc/JsonEditor'
-import MarkdownEditor from '@/components/misc/Markdown/Editor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -18,23 +17,40 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Switch } from '@/components/ui/switch'
 import { timezones } from '@/constants/timezone'
 import { useApp } from '@/context/AppContext'
+import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { digestGenerationConfigSchema } from '@/schemas/digest'
+import { IQuorePrompt } from '@/types/quore'
 import { cn } from '@/utils/misc'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
-import { useActionData, useNavigate, useNavigation, useParams } from '@remix-run/react'
-import { FormField, FormWrapper } from 'core-ui'
+import {
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+  useParams,
+} from '@remix-run/react'
+import { FormField, FormSelect, FormWrapper } from 'core-ui'
 import { Check, Plus, Tag, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Cron } from 'react-js-cron'
 import 'react-js-cron/dist/styles.css'
 
+export function loader() {
+  const quoreApiUrl = process.env.QUORE_API_URL
+  const nodeEnv = process.env.NODE_ENV
+
+  return { quoreApiUrl, nodeEnv }
+}
+
 export default function DigestGeneratorCreate() {
+  const { quoreApiUrl, nodeEnv } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const navigate = useNavigate()
   const navigation = useNavigation()
   const params = useParams()
+  const handleApiError = useHandleApiError()
   const { token } = useApp()
   const [errorFields, setErrorFields] = useState<any>()
   const [generateEmptyDigest, setGenerateEmptyDigest] = useState<boolean>(false)
@@ -44,13 +60,28 @@ export default function DigestGeneratorCreate() {
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [newFilterTag, setNewFilterTag] = useState<string>('')
   const [filterLabels, setFilterLabels] = useState<string>('')
-  const [systemPrompt, setSystemPrompt] = useState<string>('')
   const [cron, setCron] = useState('0 5 * * 1')
   const [timezoneSelected, setTimezoneSelected] = useState<string>('')
   const [open, setOpen] = useState<boolean>(false)
+  const [quorePrompts, setQuorePrompts] = useState<IQuorePrompt[]>([])
+  const [quorePromptId, setQuorePromptId] = useState<string>('')
+  const [isLoadingQuorePrompts, setIsLoadingQuorePrompts] = useState<boolean>(false)
+  const [color, setColor] = useState<string>('#8FB596')
 
   const onCancel = () =>
     navigate(`/projects/${params.project_id}/digest-generator`, { replace: true })
+
+  const fetchQuorePromps = async () => {
+    try {
+      const response = await fetchApi(`${quoreApiUrl}/prompts`, token!, nodeEnv)
+
+      setQuorePrompts(response.data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoadingQuorePrompts(false)
+    }
+  }
 
   const onRemoveError = (fieldName: string, value?: string) => {
     setErrorFields((prev: any) => ({
@@ -95,6 +126,12 @@ export default function DigestGeneratorCreate() {
     }
   }, [actionData])
 
+  useEffect(() => {
+    if (token) {
+      fetchQuorePromps()
+    }
+  }, [token])
+
   return (
     <FormWrapper
       method="POST"
@@ -104,12 +141,14 @@ export default function DigestGeneratorCreate() {
       hiddenInputs={{
         token: token!,
         project_id: params.project_id!,
-        system_prompt: systemPrompt,
+        color,
         tags: JSON.stringify(tags),
         labels,
         filter_tags: JSON.stringify(filterTags),
         filter_labels: filterLabels,
         cron_expression: cron,
+        timezone: timezoneSelected,
+        system_prompt: quorePromptId,
       }}>
       <h3 className="mb-3 text-base font-semibold">General</h3>
       <Card className="shadow-none">
@@ -124,29 +163,63 @@ export default function DigestGeneratorCreate() {
             onChange={(value) => onRemoveError('title', value)}
           />
 
-          {/* System Prompt */}
+          {/* Query */}
+          <FormField
+            label="Query"
+            name="query"
+            required
+            error={errorFields?.title}
+            onChange={(value) => onRemoveError('query', value)}
+          />
+
+          <FormSelect
+            label="Quore Prompts"
+            name=""
+            value={quorePromptId}
+            onValueChange={(value) => {
+              if (value) {
+                console.log('value ', value)
+
+                setQuorePromptId(value)
+              }
+            }}
+            loading={isLoadingQuorePrompts}
+            disabled={quorePrompts.length === 0}
+            options={quorePrompts.map((prompt) => ({
+              label: prompt.name,
+              value: prompt.id || '',
+            }))}
+          />
+
           <div className="mb-3">
-            <Label>System Prompt</Label>
-            <MarkdownEditor
-              editorHeight={200}
-              value={systemPrompt}
-              onUpdateChange={(val) => setSystemPrompt(val)}
-            />
+            <Label>Pick Color</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-10 w-20 cursor-pointer rounded border border-input bg-background"
+              />
+              <Input
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                placeholder="#ffffff"
+                className="w-24 capitalize"
+              />
+            </div>
           </div>
 
           {/* Timezone */}
+          <Label>Timezone</Label>
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-              <div>
-                <Label>Timezone</Label>
-                <Input
-                  value={timezoneSelected}
-                  readOnly
-                  name="timezone"
-                  className="cursor-pointer text-start"
-                  placeholder="Select timezone"
-                />
-              </div>
+              <Input
+                value={timezoneSelected}
+                readOnly
+                name="timezone"
+                className="cursor-pointer text-start"
+                placeholder="Select timezone"
+              />
             </PopoverTrigger>
             <PopoverContent className="p-0" align="start">
               <Command>
@@ -182,7 +255,6 @@ export default function DigestGeneratorCreate() {
           {/* Cron Expression */}
           <div className="mt-3">
             <Label>Cron Expression</Label>
-
             <Cron value={cron} setValue={setCron} />
           </div>
 
@@ -312,6 +384,8 @@ export async function action({ request }: ActionFunctionArgs) {
   const {
     title,
     system_prompt,
+    color,
+    query,
     timezone,
     cron_expression,
     generate_empty_digest,
@@ -323,9 +397,12 @@ export async function action({ request }: ActionFunctionArgs) {
     token,
   } = Object.fromEntries(formData)
 
+  console.log('system_prompt ', system_prompt)
+
   const validated = digestGenerationConfigSchema.safeParse({
     title: title.toString(),
     system_prompt: system_prompt.toString(),
+    query: query.toString(),
     timezone: timezone.toString(),
     cron_expression: cron_expression.toString(),
     generate_empty_digest: generate_empty_digest === 'on',
@@ -346,7 +423,7 @@ export async function action({ request }: ActionFunctionArgs) {
       nodeEnv,
       {
         method: 'POST',
-        body: JSON.stringify(validated.data),
+        body: JSON.stringify({ ...validated.data, ui_format: { color: color } }),
       },
     )
 
@@ -357,6 +434,7 @@ export async function action({ request }: ActionFunctionArgs) {
     })
   } catch (error: any) {
     const convertError = JSON.parse(error?.message)
+    console.log('convertError ', convertError.error[0])
 
     return redirectWithToast(
       convertError.status === 401
