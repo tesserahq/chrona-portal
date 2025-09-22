@@ -20,6 +20,7 @@ export interface IWorkspace {
   created_by_id: string
   created_by: IUser
   locked: boolean
+  quore_workspace_id?: string
 }
 
 export interface IWorkspaceLogo {
