@@ -89,7 +89,7 @@ export default function PublicGazetteSharePage() {
     setError('')
 
     try {
-      const url = `${apiUrl}/gazettes/share/${params.key}`
+      const url = `${apiUrl}/gazettes/share/${params.gazette_key}`
       const response = await fetch(url, { method: 'GET' })
 
       if (response.ok) {
@@ -165,10 +165,10 @@ export default function PublicGazetteSharePage() {
   const currentColorTheme = colors.find((color) => color.name === selectedColorTheme)
 
   useEffect(() => {
-    if (params.key) {
+    if (params.gazette_key) {
       fetchSharedGazette()
     }
-  }, [params.key])
+  }, [params.gazette_key])
 
   if (isLoading) {
     return <AppPreloader className="h-screen" />
@@ -246,6 +246,7 @@ export default function PublicGazetteSharePage() {
                   {colors.map((color) => (
                     <button
                       key={color.name}
+                      type="button"
                       onClick={() => setSelectedColorTheme(color.name)}
                       className={`flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors ${
                         selectedColorTheme === color.name
