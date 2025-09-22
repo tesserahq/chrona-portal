@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import JSONEditor from '@/components/misc/JsonEditor'
-import MarkdownEditor from '@/components/misc/Markdown/Editor'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -23,6 +22,7 @@ import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { digestGenerationConfigSchema } from '@/schemas/digest'
 import { IDigestGenerator } from '@/types/digest'
+import { IQuorePrompt } from '@/types/quore'
 import { cn } from '@/utils/misc'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
@@ -33,7 +33,7 @@ import {
   useNavigation,
   useParams,
 } from '@remix-run/react'
-import { FormField, FormWrapper } from 'core-ui'
+import { FormField, FormSelect, FormWrapper } from 'core-ui'
 import { Check, Plus, Tag, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Cron } from 'react-js-cron'
@@ -41,13 +41,14 @@ import 'react-js-cron/dist/styles.css'
 
 export function loader() {
   const apiUrl = process.env.API_URL
+  const quoreApiUrl = process.env.QUORE_API_URL
   const nodeEnv = process.env.NODE_ENV
 
-  return { apiUrl, nodeEnv }
+  return { apiUrl, quoreApiUrl, nodeEnv }
 }
 
 export default function DigestGeneratorEdit() {
-  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { apiUrl, quoreApiUrl, nodeEnv } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const navigate = useNavigate()
   const navigation = useNavigation()
@@ -58,22 +59,39 @@ export default function DigestGeneratorEdit() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [errorFields, setErrorFields] = useState<any>()
   const [title, setTitle] = useState<string>('')
+  const [query, setQuery] = useState<string>('')
   const [generateEmptyDigest, setGenerateEmptyDigest] = useState<boolean>(false)
   const [tags, setTags] = useState<string[]>([])
   const [labels, setLabels] = useState<string>('')
   const [newTag, setNewTag] = useState<string>('')
-  const [systemPrompt, setSystemPrompt] = useState<string>('')
+  // const [systemPrompt, setSystemPrompt] = useState<string>('')
   const [cronExpression, setCronExpression] = useState<string>('')
   const [filterTags, setFilterTags] = useState<string[]>([])
   const [newFilterTag, setNewFilterTag] = useState<string>('')
   const [filterLabels, setFilterLabels] = useState<string>('')
   const [timezoneSelected, setTimezoneSelected] = useState<string>('')
   const [open, setOpen] = useState<boolean>(false)
+  const [quorePrompts, setQuorePrompts] = useState<IQuorePrompt[]>([])
+  const [quorePromptId, setQuorePromptId] = useState<string>('')
+  const [isLoadingQuorePrompts, setIsLoadingQuorePrompts] = useState<boolean>(false)
+  const [color, setColor] = useState<string>('#8FB596')
 
   const onCancel = () =>
     navigate(`/projects/${params.project_id}/digest-generator`, {
       replace: true,
     })
+
+  const fetchQuorePromps = async () => {
+    try {
+      const response = await fetchApi(`${quoreApiUrl}/prompts`, token!, nodeEnv)
+
+      setQuorePrompts(response.data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoadingQuorePrompts(false)
+    }
+  }
 
   const onRemoveError = (fieldName: string, value?: string) => {
     setErrorFields((prev: any) => ({
@@ -119,7 +137,8 @@ export default function DigestGeneratorEdit() {
       const data: IDigestGenerator = await fetchApi(url, token!, nodeEnv)
 
       setTitle(data.title || '')
-      setSystemPrompt(data.system_prompt || '')
+      setQuery(data.query || '')
+      setQuorePromptId(data.system_prompt || '')
       setTimezoneSelected(data.timezone || '')
       setCronExpression(data.cron_expression || '')
       setGenerateEmptyDigest(Boolean(data.generate_empty_digest))
@@ -127,6 +146,7 @@ export default function DigestGeneratorEdit() {
       setLabels(JSON.stringify(data.labels ?? {}, null, 2))
       setFilterTags(Array.isArray(data.filter_tags) ? data.filter_tags : [])
       setFilterLabels(JSON.stringify(data.filter_labels ?? {}, null, 2))
+      setColor(data.ui_format?.color || '#8FB596')
     } catch (error: any) {
       handleApiError(error)
     } finally {
@@ -140,6 +160,12 @@ export default function DigestGeneratorEdit() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, params.id])
+
+  useEffect(() => {
+    if (token) {
+      fetchQuorePromps()
+    }
+  }, [token])
 
   useEffect(() => {
     if (actionData?.errors) {
@@ -159,8 +185,9 @@ export default function DigestGeneratorEdit() {
         token: token!,
         id: params.id!,
         project_id: params.project_id!,
-        system_prompt: systemPrompt,
+        system_prompt: quorePromptId,
         tags: JSON.stringify(tags),
+        color,
         labels,
         filter_tags: JSON.stringify(filterTags),
         filter_labels: filterLabels,
@@ -183,14 +210,48 @@ export default function DigestGeneratorEdit() {
             }}
           />
 
-          {/* System Prompt */}
+          {/* Query */}
+          <FormField
+            label="Query"
+            name="query"
+            required
+            value={query}
+            error={errorFields?.query}
+            onChange={(value) => {
+              setQuery(value)
+              onRemoveError('query', value)
+            }}
+          />
+
+          <FormSelect
+            label="Quore Prompts"
+            name=""
+            value={quorePromptId}
+            onValueChange={setQuorePromptId}
+            loading={isLoadingQuorePrompts}
+            disabled={quorePrompts.length === 0}
+            options={quorePrompts.map((prompt) => ({
+              label: prompt.name,
+              value: prompt.id || '',
+            }))}
+          />
+
           <div className="mb-3">
-            <Label>System Prompt</Label>
-            <MarkdownEditor
-              editorHeight={200}
-              value={systemPrompt}
-              onUpdateChange={(val) => setSystemPrompt(val)}
-            />
+            <Label>Pick Color</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                className="h-10 w-20 cursor-pointer rounded border border-input bg-background"
+              />
+              <Input
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                placeholder="#ffffff"
+                className="w-24 capitalize"
+              />
+            </div>
           </div>
 
           {/* Timezone */}
@@ -369,7 +430,9 @@ export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData()
   const {
     title,
+    query,
     system_prompt,
+    color,
     timezone,
     cron_expression,
     generate_empty_digest,
@@ -384,6 +447,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const validated = digestGenerationConfigSchema.safeParse({
     title: title.toString(),
+    query: query.toString(),
     system_prompt: system_prompt.toString(),
     timezone: timezone.toString(),
     cron_expression: cron_expression.toString(),
@@ -405,7 +469,7 @@ export async function action({ request }: ActionFunctionArgs) {
       nodeEnv,
       {
         method: 'PUT',
-        body: JSON.stringify(validated.data),
+        body: JSON.stringify({ ...validated.data, ui_format: { color: color } }),
       },
     )
 
