@@ -18,7 +18,8 @@ import {
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
-import { IWorkspaceStats } from '@/types/workspace'
+import { setQuoreWorkspaceID } from '@/libraries/storage'
+import { IWorkspace, IWorkspaceStats } from '@/types/workspace'
 import { cn } from '@/utils/misc'
 import { Link, useLoaderData, useParams } from '@remix-run/react'
 import { format, formatDistance } from 'date-fns'
@@ -147,6 +148,29 @@ export default function WorkspaceHome() {
     }
   }
 
+  const findQuoreWorkspaceId = async () => {
+    try {
+      // fetch all workspaces to set quoreWorkspaceId
+      // quoreWorkspaceId is used for page create/edit project to allow user select existing project from quore
+      const response = await fetchApi(`${apiUrl}/workspaces`, token!, nodeEnv)
+
+      const workspaces = await response.data
+
+      if (workspaces.length > 0) {
+        // find workspace by id
+        const findWorkspace: IWorkspace = await workspaces.find(
+          (workspace: IWorkspace) => workspace.id === params.workspace_id,
+        )
+
+        setQuoreWorkspaceID(findWorkspace.quore_workspace_id || '')
+      }
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const resourceNewActions = [
     {
       label: 'Project',
@@ -155,8 +179,11 @@ export default function WorkspaceHome() {
   ]
 
   useEffect(() => {
-    fetchWorkspaceStats()
-  }, [params.workspace_id])
+    if (token) {
+      fetchWorkspaceStats()
+      findQuoreWorkspaceId()
+    }
+  }, [params.workspace_id, token])
 
   if (isLoading) {
     return <AppPreloader />

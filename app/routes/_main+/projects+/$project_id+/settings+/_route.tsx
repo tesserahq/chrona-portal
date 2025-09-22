@@ -20,13 +20,14 @@ import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
-import { getWorkspaceID } from '@/libraries/storage'
+import { getQuoreWorkspaceID, getWorkspaceID } from '@/libraries/storage'
 import { projectSchema } from '@/schemas/project'
 import { IProject } from '@/types/project'
+import { IQuoreProject } from '@/types/quore'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigation, useParams } from '@remix-run/react'
-import { FormField, FormWrapper } from 'core-ui'
+import { FormField, FormSelect, FormWrapper } from 'core-ui'
 import { Check, Copy, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -34,11 +35,12 @@ export function loader() {
   return {
     apiUrl: process.env.API_URL,
     nodeEnv: process.env.NODE_ENV,
+    quoreApiUrl: process.env.QUORE_API_URL,
   }
 }
 
 export default function ProjectSetting() {
-  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { apiUrl, nodeEnv, quoreApiUrl } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const params = useParams()
   const navigation = useNavigation()
@@ -49,8 +51,29 @@ export default function ProjectSetting() {
   const [errorFields, setErrorFields] = useState<any>()
   const handleApiError = useHandleApiError()
   const [labels, setLabels] = useState<string>('')
+  const [quoreProjects, setQuoreProjects] = useState<IQuoreProject[]>([])
+  const [quoreProjectId, setQuoreProjectId] = useState<string>('')
+  const [isLoadingProject, setIsLoadingProject] = useState<boolean>(true)
 
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+
+  const fetchProjects = async (quoreWorkspaceId: string) => {
+    setIsLoadingProject(true)
+
+    try {
+      const response = await fetchApi(
+        `${quoreApiUrl}/workspaces/${quoreWorkspaceId}/projects`,
+        token!,
+        nodeEnv,
+      )
+
+      setQuoreProjects(response.data)
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setIsLoadingProject(false)
+    }
+  }
 
   const getProjectDetail = async () => {
     try {
@@ -62,6 +85,7 @@ export default function ProjectSetting() {
 
       setProject(response)
       setLabels(JSON.stringify(response.labels ? response.labels : {}))
+      setQuoreProjectId(response.quore_project_id || '')
     } catch (error: any) {
       handleApiError(error)
     } finally {
@@ -86,8 +110,11 @@ export default function ProjectSetting() {
   }, [actionData])
 
   useEffect(() => {
+    const quoreWorkspaceId = getQuoreWorkspaceID()
+
     if (token) {
       getProjectDetail()
+      fetchProjects(quoreWorkspaceId!)
     }
   }, [token])
 
@@ -135,8 +162,8 @@ export default function ProjectSetting() {
         </div>
 
         <h3 className="mb-3 text-base font-semibold">General</h3>
-        <Card className="mb-3">
-          <CardContent className="border border-input py-5">
+        <Card className="mb-3 shadow-none">
+          <CardContent className="py-5">
             <FormField
               label="Name"
               name="name"
@@ -145,11 +172,25 @@ export default function ProjectSetting() {
               defaultValue={project?.name}
               error={errorFields?.name}
             />
+
             <FormField
               label="Description"
               name="description"
               type="textarea"
               defaultValue={project?.description}
+            />
+
+            <FormSelect
+              label="Quore Project"
+              name="quore_project_id"
+              value={quoreProjectId}
+              loading={isLoadingProject}
+              disabled={quoreProjects.length === 0}
+              onValueChange={(val) => setQuoreProjectId(val)}
+              options={quoreProjects.map((project) => ({
+                label: project.name,
+                value: project.id,
+              }))}
             />
           </CardContent>
         </Card>

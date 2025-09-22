@@ -16,4 +16,5 @@ export interface IProject {
   created_at: string
   updated_at: string
   labels?: any
+  quore_project_id?: string
 }

@@ -6,13 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { fetchApi } from '@/libraries/fetch'
 import { IWorkspace, IWorkspaceLogo } from '@/types/workspace'
-import { Link, Outlet, useLoaderData, useNavigate } from '@remix-run/react'
+import { Outlet, useLoaderData, useNavigate } from '@remix-run/react'
 import { Gauge, LockKeyhole, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Avatar from 'boring-avatars'
 import { cn } from '@/utils/misc'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
+import { setQuoreWorkspaceID } from '@/libraries/storage'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -42,6 +43,11 @@ export default function Index() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const onRedirect = (workspace: IWorkspace, path: string) => {
+    setQuoreWorkspaceID(workspace.quore_workspace_id || '')
+    navigate(`/workspaces/${workspace.id}/${path}`)
   }
 
   useEffect(() => {
@@ -100,45 +106,39 @@ export default function Index() {
                       {workspace.locked && (
                         <LockKeyhole className="absolute right-3 top-3" />
                       )}
-                      <div className="h-52 min-h-52 rounded-t-lg">
-                        <Link to={`${workspace.id}/overview`} replace>
-                          <div className="flex h-full items-end justify-center">
-                            <Avatar
-                              size={180}
-                              name={logo.name || 'Mary Baker'}
-                              variant={(logo.variant as any) || 'abstract'}
-                              colors={logo.colors}
-                            />
-                          </div>
-                        </Link>
+                      <div
+                        className="flex h-52 cursor-pointer items-end justify-center"
+                        onClick={() => onRedirect(workspace, 'overview')}>
+                        <Avatar
+                          size={180}
+                          name={logo.name || 'Mary Baker'}
+                          variant={(logo.variant as any) || 'abstract'}
+                          colors={logo.colors}
+                        />
                       </div>
-                      <div className="flex flex-1 flex-col justify-between py-2">
-                        <div>
-                          <h3 className="line-clamp-3 w-full pt-2 text-center text-base font-medium drop-shadow-sm">
-                            <Link
-                              to={`${workspace.id}/overview`}
-                              className="transition-colors">
-                              {workspace.name}
-                            </Link>
-                          </h3>
-                          <p className="line-clamp-2 w-full text-center text-xs text-muted-foreground drop-shadow-sm">
-                            {workspace.description}
-                          </p>
-                        </div>
+                      <div className="flex flex-1 flex-col py-2">
+                        <h3
+                          className="line-clamp-3 w-full cursor-pointer pt-2 text-center text-base font-medium drop-shadow-sm"
+                          onClick={() => onRedirect(workspace, 'overview')}>
+                          {workspace.name}
+                        </h3>
+                        <p className="line-clamp-2 w-full text-center text-xs text-muted-foreground drop-shadow-sm">
+                          {workspace.description}
+                        </p>
                       </div>
                       <div className="mt-2 flex w-full items-center justify-between justify-self-end">
-                        <Link
-                          to={`${workspace.id}/projects`}
-                          className="group flex items-center space-x-2">
+                        <div
+                          className="group flex cursor-pointer items-center space-x-2"
+                          onClick={() => onRedirect(workspace, 'projects')}>
                           <Gauge size={20} className="text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">Projects</span>
-                        </Link>
-                        <Link
-                          to={`${workspace.id}/settings`}
-                          className="group flex items-center space-x-2">
+                        </div>
+                        <div
+                          className="group flex cursor-pointer items-center space-x-2"
+                          onClick={() => onRedirect(workspace, 'settings')}>
                           <Settings size={20} className="text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">Settings</span>
-                        </Link>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
