@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import DeleteConfirmation from '@/components/misc/Dialog/DeleteConfirmation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -7,10 +8,13 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { ISource } from '@/types/source'
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { useActionData, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
 import { CalendarDays, Edit, EllipsisVertical, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ActionFunctionArgs } from '@remix-run/node'
+import { redirectWithToast } from '@/utils/toast.server'
+import { toast } from 'sonner'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -21,12 +25,14 @@ export function loader() {
 
 export default function SourceDetailPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const params = useParams()
   const navigate = useNavigate()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [source, setSource] = useState<ISource | null>(null)
+  const deleteRef = useRef<any>(null)
 
   const fetchSource = async () => {
     setIsLoading(true)
@@ -48,6 +54,17 @@ export default function SourceDetailPage() {
       fetchSource()
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (actionData?.success) {
+      // show success message
+      toast.success(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+      // redirect to sources list
+      navigate(`/workspaces/${params.workspace_id}/sources`)
+    }
+  }, [actionData, navigate, params.workspace_id])
 
   if (isLoading) return <AppPreloader />
 
@@ -81,8 +98,7 @@ export default function SourceDetailPage() {
                   variant="ghost"
                   className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
                   onClick={() => {
-                    // deleteRef.current?.onOpen()
-                    // setEntryDelete(entry)
+                    deleteRef.current?.onOpen()
                   }}>
                   <Trash2 />
                   <span>Delete</span>
@@ -127,6 +143,45 @@ export default function SourceDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <DeleteConfirmation
+        ref={deleteRef}
+        alert="Source"
+        title={`Delete "${source?.name}" source?`}
+        data={{
+          workspace_id: params.workspace_id,
+          source_id: source?.id,
+          token: token,
+        }}
+      />
     </div>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { workspace_id, source_id, token } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/sources/${source_id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return { success: true, message: `Source deleted successfully` }
+    }
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return redirectWithToast(`/workspaces/${workspace_id}/sources`, {
+      type: 'error',
+      title: 'Error',
+      description: `${convertError.status} - ${convertError.error}`,
+    })
+  }
 }

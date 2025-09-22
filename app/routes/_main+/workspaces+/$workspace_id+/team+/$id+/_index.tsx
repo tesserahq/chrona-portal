@@ -1,18 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { fetchApi } from '@/libraries/fetch'
 import { IMembership } from '@/types/invitation'
 import { useAuth0 } from '@auth0/auth0-react'
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { useLoaderData, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -28,7 +21,6 @@ export default function WorkspaceTeamDetail() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
   const { getAccessTokenSilently } = useAuth0()
   const params = useParams()
-  const navigate = useNavigate()
   const [member, setMember] = useState<IMembership>()
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
@@ -88,13 +80,6 @@ export default function WorkspaceTeamDetail() {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="mt-5 flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/workspaces/${params.workspace_id}/team`)}>
-            Back
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   )

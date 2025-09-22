@@ -5,13 +5,12 @@ import ProjectShortcut from '@/components/misc/ProjectShortcut'
 import SidebarPanel, { IMenuItemProps } from '@/components/misc/Sidebar/SidebarPanel'
 import SidebarPanelMin from '@/components/misc/Sidebar/SidebarPanelMin'
 import WorkspaceShortcut from '@/components/misc/WorkspaceShortcut'
-import { AppProvider } from '@/context/AppContext'
+import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { setProjectID, setWorkspaceID } from '@/libraries/storage'
 import '@/styles/customs/sidebar.css'
 import { cn } from '@/utils/misc'
-import { useAuth0 } from '@auth0/auth0-react'
 import { Outlet, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import {
   ChevronRight,
@@ -42,9 +41,8 @@ export default function Layout() {
   const [isExpanded, setIsExpanded] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
-  const { getAccessTokenSilently } = useAuth0()
+  const { isLoading, token } = useApp()
   const handleApiError = useHandleApiError()
-  const [isLoadingInvitation, setIsLoadingInvitation] = useState<boolean>(true)
 
   const projectItems: IMenuItemProps[] = [
     // {
@@ -137,7 +135,6 @@ export default function Layout() {
 
   const fetchInvitation = async () => {
     try {
-      const token = await getAccessTokenSilently()
       // Get all valid invitations for the current user.
       const response = await fetchApi(`${apiUrl}/invitations`, token!, nodeEnv)
 
@@ -146,8 +143,6 @@ export default function Layout() {
       }
     } catch (error: any) {
       handleApiError(error)
-    } finally {
-      setIsLoadingInvitation(false)
     }
   }
 
@@ -162,72 +157,65 @@ export default function Layout() {
   }, [onResize])
 
   useEffect(() => {
-    fetchInvitation()
-  }, [])
+    if (!isLoading) {
+      fetchInvitation()
+    }
+  }, [isLoading])
 
   useEffect(() => {
     if (params.workspace_id) setWorkspaceID(params.workspace_id)
     if (params.project_id) setProjectID(params.project_id)
   }, [params.workspace_id, params.project_id])
 
-  if (isLoadingInvitation) {
+  if (isLoading) {
     // Display loading screen when auth0 isLoading true
     return <AppPreloader className="min-h-screen" />
   }
 
-  return (
-    <AppProvider>
-      {params.workspace_id || params.project_id ? (
-        <div
-          ref={containerRef}
-          className={cn(
-            'has-min-sidebar is-header-blur',
-            isExpanded && 'is-sidebar-open',
-          )}>
-          <div id="root" className="min-h-100vh flex grow">
-            <div className="sidebar print:hidden">
-              <SidebarPanel
-                menuItems={params.workspace_id ? workspaceItems : projectItems}
-              />
-              <SidebarPanelMin
-                menuItems={params.workspace_id ? workspaceItems : projectItems}
-              />
-            </div>
-
-            <Header
-              withSidebar
-              apiUrl={apiUrl!}
-              nodeEnv={nodeEnv}
-              action={
-                // show shortcut to choose current workspace or project
-                params.workspace_id || params.project_id ? (
-                  <>
-                    <WorkspaceShortcut apiUrl={apiUrl!} nodeEnv={nodeEnv} />
-                    {params.project_id && (
-                      <>
-                        <ChevronRight
-                          size={15}
-                          className="mr-2 text-slate-400 dark:text-slate-500"
-                        />
-                        <ProjectShortcut apiUrl={apiUrl!} nodeEnv={nodeEnv} />
-                      </>
-                    )}
-                  </>
-                ) : null
-              }
-              hostUrl={hostUrl}
-              isExpanded={isExpanded}
-              setIsExpanded={setIsExpanded}
-            />
-
-            <main className="main-content w-full">
-              <Outlet />
-            </main>
-          </div>
+  return params.workspace_id || params.project_id ? (
+    <div
+      ref={containerRef}
+      className={cn('has-min-sidebar is-header-blur', isExpanded && 'is-sidebar-open')}>
+      <div id="root" className="min-h-100vh flex grow">
+        <div className="sidebar print:hidden">
+          <SidebarPanel menuItems={params.workspace_id ? workspaceItems : projectItems} />
+          <SidebarPanelMin
+            menuItems={params.workspace_id ? workspaceItems : projectItems}
+          />
         </div>
-      ) : (
-        <Outlet />
-      )}
-    </AppProvider>
+
+        <Header
+          withSidebar
+          apiUrl={apiUrl!}
+          nodeEnv={nodeEnv}
+          action={
+            // show shortcut to choose current workspace or project
+            params.workspace_id || params.project_id ? (
+              <>
+                <WorkspaceShortcut apiUrl={apiUrl!} nodeEnv={nodeEnv} />
+                {params.project_id && (
+                  <>
+                    <ChevronRight
+                      size={15}
+                      className="mr-2 text-slate-400 dark:text-slate-500"
+                    />
+                    <ProjectShortcut apiUrl={apiUrl!} nodeEnv={nodeEnv} />
+                  </>
+                )}
+              </>
+            ) : null
+          }
+          hostUrl={hostUrl}
+          isExpanded={isExpanded}
+          setIsExpanded={setIsExpanded}
+        />
+
+        <main className="main-content w-full">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  ) : (
+    <Outlet />
   )
 }
