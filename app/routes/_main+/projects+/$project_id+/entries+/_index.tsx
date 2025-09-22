@@ -267,7 +267,7 @@ export default function ProjectEntriesPage() {
       },
     },
     {
-      accessorKey: 'created_at',
+      accessorKey: 'source_created_at',
       header: 'Created',
       size: 130,
       cell: ({ row }) => {
@@ -277,13 +277,13 @@ export default function ProjectEntriesPage() {
             <Tooltip>
               <TooltipTrigger>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entry.created_at), new Date(), {
+                  {formatDistance(new Date(entry.source_created_at), new Date(), {
                     includeSeconds: true,
                   })}
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <span>Created At {format(entry.created_at, 'PPpp')}</span>
+                <span>Created At {format(entry.source_created_at, 'PPpp')}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -291,7 +291,7 @@ export default function ProjectEntriesPage() {
       },
     },
     {
-      accessorKey: 'updated_at',
+      accessorKey: 'source_updated_at',
       header: 'Updated',
       size: 130,
       cell: ({ row }) => {
@@ -301,13 +301,13 @@ export default function ProjectEntriesPage() {
             <Tooltip>
               <TooltipTrigger>
                 <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entry.updated_at), new Date(), {
+                  {formatDistance(new Date(entry.source_updated_at), new Date(), {
                     includeSeconds: true,
                   })}
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <span>Updated At {format(entry.updated_at, 'PPpp')}</span>
+                <span>Updated At {format(entry.source_updated_at, 'PPpp')}</span>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
