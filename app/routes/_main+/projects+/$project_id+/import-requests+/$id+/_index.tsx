@@ -3,9 +3,15 @@ import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import PreviewJsonDialog from '@/components/misc/Dialog/PreviewJson'
 import { StatusBadge } from '@/components/misc/StatusBadge'
-import { Badge } from '@/components/ui/badge'
+import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
@@ -50,15 +56,65 @@ export default function ImportRequestDetailPage() {
 
   const columnDef: ColumnDef<IImportRequestItem>[] = [
     {
+      accessorKey: 'id',
+      header: 'ID',
+      size: 5,
+      cell: ({ row }) => {
+        const id = row.original.id
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="text-start">
+                  {id.length > 8 ? id.slice(0, 8) + '...' : id}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{id}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+    },
+    {
+      accessorKey: 'raw_payload.title',
+      header: 'Title',
+      size: 100,
+      cell: ({ row }) => {
+        const title = row.original.raw_payload.title
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="text-start">
+                  {title.length > 8 ? title.slice(0, 8) + '...' : title}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{title}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+    },
+    {
+      accessorKey: 'raw_payload.tags',
+      header: 'Tags',
+      size: 5,
+      cell: ({ row }) => {
+        return <TagsPreview tags={row.original.raw_payload.tags} />
+      },
+    },
+    {
       accessorKey: 'status',
       header: 'Status',
+      size: 5,
       cell: ({ row }) => {
-        return <Badge variant="secondary">{row.original.status}</Badge>
+        return <StatusBadge status={row.original.status} />
       },
     },
     {
       accessorKey: 'created_at',
       header: 'Created',
+      size: 5,
       cell: ({ row }) => {
         return <DatePreview label="Created At" date={row.original.created_at} />
       },
@@ -66,6 +122,7 @@ export default function ImportRequestDetailPage() {
     {
       accessorKey: 'updated_at',
       header: 'Updated',
+      size: 5,
       cell: ({ row }) => {
         return <DatePreview label="Updated At" date={row.original.updated_at} />
       },
@@ -73,7 +130,7 @@ export default function ImportRequestDetailPage() {
     {
       accessorKey: 'raw_payload',
       header: 'Payload',
-      size: 50,
+      size: 5,
       cell: ({ row }) => {
         return (
           <div className="flex w-full items-center justify-center">

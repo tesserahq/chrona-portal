@@ -87,7 +87,7 @@ export default function PublicGazetteSharePage() {
   const [digests, setDigests] = useState<IDigest[]>([])
   const [sections, setSections] = useState<IGazetteSection[]>([])
   const [error, setError] = useState<string>('')
-  const [selectedColorTheme, setSelectedColorTheme] = useState<string>('')
+  const [selectedColorTheme, setSelectedColorTheme] = useState<string>('Classic Black')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const submit = useSubmit()
   const tags = searchParams.get('tags')
@@ -354,8 +354,7 @@ export default function PublicGazetteSharePage() {
       <nav
         className="sticky top-0 z-10 flex items-center justify-center gap-2 py-3"
         style={{
-          backgroundColor:
-            currentColorTheme?.primary || digests[0]?.ui_format?.color || '#ff8f52',
+          backgroundColor: currentColorTheme?.primary || '#374151',
         }}>
         {gazette.tags && gazette.tags.length > 0 && (
           <>

@@ -1,22 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
-import EmptyContent from '@/components/misc/EmptyContent'
+import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import EmptyContent from '@/components/misc/EmptyContent'
 import { LabelTooltip } from '@/components/misc/LabelTooltip'
-import { Badge } from '@/components/ui/badge'
+import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IEntry } from '@/types/entry'
+import { IPaging } from '@/types/pagination'
+import { ensureCanonicalPagination } from '@/utils/pagination.server'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import {
   Link,
   useActionData,
@@ -25,14 +24,9 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { format, formatDistance } from 'date-fns'
-import { EllipsisVertical, EyeIcon, Tag, Trash2 } from 'lucide-react'
+import { EllipsisVertical, EyeIcon, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { redirectWithToast } from '@/utils/toast.server'
 import { toast } from 'sonner'
-import { IPaging } from '@/types/pagination'
-import { ensureCanonicalPagination } from '@/utils/pagination.server'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -164,42 +158,8 @@ export default function ProjectEntriesPage() {
       header: 'Tags',
       cell: ({ row }) => {
         const tags = row.original.tags || []
-        const firstTag = tags[0]
-        const remaining = tags.slice(1)
 
-        return (
-          <div className="flex flex-wrap items-center gap-1">
-            {firstTag && (
-              <Badge key={firstTag} variant="secondary" className="text-xs">
-                <Tag className="mr-1 h-3 w-3" />
-                {firstTag}
-              </Badge>
-            )}
-
-            {remaining.length > 0 && (
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge variant="outline" className="cursor-pointer text-xs">
-                      +{remaining.length}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-3 py-2" side="bottom">
-                    <h1 className="mb-2 font-medium">Tags</h1>
-                    <div className="flex max-w-xs flex-wrap gap-1">
-                      {remaining.map((t) => (
-                        <Badge key={t} variant="secondary" className="text-xs">
-                          <Tag className="mr-1 h-3 w-3" />
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-        )
+        return <TagsPreview tags={tags} />
       },
     },
     {
@@ -271,23 +231,8 @@ export default function ProjectEntriesPage() {
       header: 'Created',
       size: 130,
       cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entry.source_created_at), new Date(), {
-                    includeSeconds: true,
-                  })}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span>Created At {format(entry.source_created_at, 'PPpp')}</span>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )
+        const { source_created_at } = row.original
+        return <DatePreview label="Created At" date={source_created_at} />
       },
     },
     {
@@ -295,23 +240,8 @@ export default function ProjectEntriesPage() {
       header: 'Updated',
       size: 130,
       cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entry.source_updated_at), new Date(), {
-                    includeSeconds: true,
-                  })}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span>Updated At {format(entry.source_updated_at, 'PPpp')}</span>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )
+        const { source_updated_at } = row.original
+        return <DatePreview label="Updated At" date={source_updated_at} />
       },
     },
   ]
