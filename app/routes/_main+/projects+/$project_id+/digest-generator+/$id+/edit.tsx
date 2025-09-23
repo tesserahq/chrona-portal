@@ -20,6 +20,7 @@ import { timezones } from '@/constants/timezone'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
+import { getQuoreWorkspaceID } from '@/libraries/storage'
 import { digestGenerationConfigSchema } from '@/schemas/digest'
 import { IDigestGenerator } from '@/types/digest'
 import { IQuorePrompt } from '@/types/quore'
@@ -83,7 +84,12 @@ export default function DigestGeneratorEdit() {
 
   const fetchQuorePromps = async () => {
     try {
-      const response = await fetchApi(`${quoreApiUrl}/prompts`, token!, nodeEnv)
+      const quoreWorkspaceId = getQuoreWorkspaceID()
+      const response = await fetchApi(
+        `${quoreApiUrl}/workspaces/${quoreWorkspaceId}/prompts`,
+        token!,
+        nodeEnv,
+      )
 
       setQuorePrompts(response.data)
     } catch (error) {

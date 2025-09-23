@@ -19,6 +19,7 @@ import { timezones } from '@/constants/timezone'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
+import { getQuoreWorkspaceID } from '@/libraries/storage'
 import { digestGenerationConfigSchema } from '@/schemas/digest'
 import { IQuorePrompt } from '@/types/quore'
 import { cn } from '@/utils/misc'
@@ -73,7 +74,12 @@ export default function DigestGeneratorCreate() {
 
   const fetchQuorePromps = async () => {
     try {
-      const response = await fetchApi(`${quoreApiUrl}/prompts`, token!, nodeEnv)
+      const quoreWorkspaceId = getQuoreWorkspaceID()
+      const response = await fetchApi(
+        `${quoreApiUrl}/workspaces/${quoreWorkspaceId}/prompts`,
+        token!,
+        nodeEnv,
+      )
 
       setQuorePrompts(response.data)
     } catch (error) {
@@ -178,8 +184,6 @@ export default function DigestGeneratorCreate() {
             value={quorePromptId}
             onValueChange={(value) => {
               if (value) {
-                console.log('value ', value)
-
                 setQuorePromptId(value)
               }
             }}
@@ -397,8 +401,6 @@ export async function action({ request }: ActionFunctionArgs) {
     token,
   } = Object.fromEntries(formData)
 
-  console.log('system_prompt ', system_prompt)
-
   const validated = digestGenerationConfigSchema.safeParse({
     title: title.toString(),
     system_prompt: system_prompt.toString(),
@@ -434,7 +436,6 @@ export async function action({ request }: ActionFunctionArgs) {
     })
   } catch (error: any) {
     const convertError = JSON.parse(error?.message)
-    console.log('convertError ', convertError.error[0])
 
     return redirectWithToast(
       convertError.status === 401
