@@ -13,7 +13,13 @@ import '@/styles/customs/gazette.css'
 import { IDigest } from '@/types/digest'
 import { IGazette, IGazetteSection } from '@/types/gazette'
 import { cn } from '@/utils/misc'
-import { useLoaderData, useNavigate, useParams, useSubmit } from '@remix-run/react'
+import {
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useSearchParams,
+  useSubmit,
+} from '@remix-run/react'
 import { format } from 'date-fns'
 import { ArrowLeft, Calendar, Monitor, Moon, Palette, Sun } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -75,6 +81,7 @@ export default function PublicGazetteSharePage() {
   const navigate = useNavigate()
   const handleApiError = useHandleApiError()
   const theme = useTheme()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [gazette, setGazette] = useState<IGazette | null>(null)
   const [digests, setDigests] = useState<IDigest[]>([])
@@ -83,13 +90,14 @@ export default function PublicGazetteSharePage() {
   const [selectedColorTheme, setSelectedColorTheme] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const submit = useSubmit()
+  const tags = searchParams.get('tags')
 
-  const fetchSharedGazette = async () => {
+  const fetchSharedGazette = async (tags: string[] = []) => {
     setIsLoading(true)
     setError('')
 
     try {
-      const url = `${apiUrl}/gazettes/share/${params.gazette_key}`
+      const url = `${apiUrl}/gazettes/share/${params.gazette_key}?tags=${tags.join(',')}`
       const response = await fetch(url, { method: 'GET' })
 
       if (response.ok) {
@@ -150,14 +158,40 @@ export default function PublicGazetteSharePage() {
       )
   }, [digests])
 
-  const handleDateSelect = (date: string) => {
-    setSelectedDate(selectedDate === date ? null : date)
-  }
-
   const scrollToDate = (date: string) => {
-    const element = document.getElementById(`date-group-${date}`)
+    const element = document.getElementById(date)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const onFilterByTags = (tag: string) => {
+    const currentTags = searchParams.get('tags')
+
+    if (!currentTags) {
+      // No tags selected, add the first tag
+      setSearchParams({ tags: tag })
+      return
+    }
+
+    // Parse current tags into an array
+    const tagsArray = currentTags.split(',').filter((t) => t.trim() !== '')
+
+    if (tagsArray.includes(tag)) {
+      // Tag is already selected, remove it
+      const filteredTags = tagsArray.filter((t) => t !== tag)
+
+      if (filteredTags.length === 0) {
+        // No tags left, remove the tags parameter
+        setSearchParams({})
+      } else {
+        // Update with remaining tags
+        setSearchParams({ tags: filteredTags.join(',') })
+      }
+    } else {
+      // Tag is not selected, add it
+      const newTags = [...tagsArray, tag]
+      setSearchParams({ tags: newTags.join(',') })
     }
   }
 
@@ -166,9 +200,55 @@ export default function PublicGazetteSharePage() {
 
   useEffect(() => {
     if (params.gazette_key) {
-      fetchSharedGazette()
+      const tagsParam = searchParams.get('tags')
+
+      if (tagsParam) {
+        const tagsArray = tagsParam.split(',').filter((t) => t.trim() !== '')
+        fetchSharedGazette(tagsArray)
+      } else {
+        // No tags filter, fetch all digests
+        fetchSharedGazette()
+      }
     }
-  }, [params.gazette_key])
+  }, [params.gazette_key, searchParams])
+
+  useEffect(() => {
+    const colorTheme = localStorage.getItem('gazette-color-theme')
+    if (colorTheme) {
+      setSelectedColorTheme(colorTheme)
+    }
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const navLinkEls = document.querySelectorAll('.timeline')
+      const sectionEls = document.querySelectorAll('.digest-section')
+
+      let currentSection = navLinkEls[0].id
+
+      sectionEls.forEach((section) => {
+        // Use HTMLElement to access offsetTop safely
+        const sectionElement = section as HTMLElement
+
+        if (window.scrollY > sectionElement.offsetTop - 100) {
+          currentSection = sectionElement.id
+        }
+      })
+
+      // to check if the current section is the same as nav section
+      navLinkEls.forEach((nav) => {
+        if (nav.id === currentSection) {
+          setSelectedDate(currentSection)
+        }
+      })
+    }
+
+    window.addEventListener('scroll', handleScroll)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
 
   if (isLoading) {
     return <AppPreloader className="h-screen" />
@@ -247,7 +327,10 @@ export default function PublicGazetteSharePage() {
                     <button
                       key={color.name}
                       type="button"
-                      onClick={() => setSelectedColorTheme(color.name)}
+                      onClick={() => {
+                        localStorage.setItem('gazette-color-theme', color.name)
+                        setSelectedColorTheme(color.name)
+                      }}
                       className={`flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors ${
                         selectedColorTheme === color.name
                           ? 'bg-gray-100 dark:bg-gray-700'
@@ -269,7 +352,7 @@ export default function PublicGazetteSharePage() {
 
       {/* Tags Bar */}
       <nav
-        className="flex items-center justify-center gap-2 py-3"
+        className="sticky top-0 z-10 flex items-center justify-center gap-2 py-3"
         style={{
           backgroundColor:
             currentColorTheme?.primary || digests[0]?.ui_format?.color || '#ff8f52',
@@ -277,12 +360,18 @@ export default function PublicGazetteSharePage() {
         {gazette.tags && gazette.tags.length > 0 && (
           <>
             {gazette.tags.map((tag) => (
-              <a
+              <button
                 key={tag}
-                href="#"
-                className="bg-transparent px-5 text-base text-white hover:text-opacity-80">
+                onClick={() => {
+                  onFilterByTags(tag)
+                }}
+                className={cn(
+                  'bg-transparent px-5 py-1 text-base text-white text-opacity-80 transition-all duration-200 hover:text-opacity-100',
+                  tags?.split(',').includes(tag) &&
+                    'rounded-md bg-white/20 font-semibold text-opacity-100',
+                )}>
                 {tag}
-              </a>
+              </button>
             ))}
           </>
         )}
@@ -300,7 +389,7 @@ export default function PublicGazetteSharePage() {
           {/* Display digests grouped by date */}
           <div className="col-span-1 lg:col-span-2">
             {Object.keys(digestGrouped).map((date) => (
-              <div key={date} id={`date-group-${date}`} className="pt-5">
+              <div key={date} id={date} className="digest-section pt-10">
                 {/* Date Header */}
                 <div className="mb-6 flex items-center justify-between gap-3">
                   <h2 className="font-playfair text-2xl font-bold text-gray-900 dark:text-white">
@@ -331,30 +420,10 @@ export default function PublicGazetteSharePage() {
                       style={{
                         borderLeft: `4px solid ${digest.ui_format?.color}`,
                       }}>
-                      {/* Tags */}
-                      {digest.tags.length > 0 && (
-                        <div className="mb-2 flex flex-wrap gap-1">
-                          {digest.tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
                       {/* Title */}
                       <h3 className="mb-3 font-playfair text-xl font-semibold leading-tight text-gray-900 dark:text-white">
                         {digest.title}
                       </h3>
-
-                      {/* Date */}
-                      <div
-                        className={`mb-4 flex items-center gap-1 text-xs ${
-                          isDark ? 'text-gray-400' : 'text-gray-500'
-                        }`}>
-                        <Calendar className="h-4 w-4" />
-                        {format(digest.created_at, 'PPP')}
-                      </div>
 
                       {/* Content */}
                       <div
@@ -362,23 +431,22 @@ export default function PublicGazetteSharePage() {
                         <MarkdownRenderer>{digest.body}</MarkdownRenderer>
                       </div>
 
-                      {/* Labels */}
-                      {Object.entries(digest.labels).length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {Object.entries(digest.labels).map(([key, value], index) => (
-                            <Badge key={index} variant="outline">
-                              {key}:{' '}
-                              {typeof value === 'object'
-                                ? JSON.stringify(value)
-                                : String(value)}
+                      {/* Tags */}
+                      {digest.tags.length > 0 && (
+                        <div className="mt-6 flex flex-wrap justify-end gap-1">
+                          {digest.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary">
+                              <span className="text-xs font-normal">{tag}</span>
                             </Badge>
                           ))}
                         </div>
                       )}
 
                       {digest.status === 'draft' && (
-                        <div className="mt-4 flex justify-end">
-                          <Badge>{digest.status}</Badge>
+                        <div className="mt-3 flex justify-end">
+                          <Badge>
+                            <span className="font-normal">{digest.status}</span>
+                          </Badge>
                         </div>
                       )}
                     </div>
@@ -390,7 +458,7 @@ export default function PublicGazetteSharePage() {
 
           {/* Timeline Sidebar */}
           <div className="col-span-1">
-            <div className="sticky top-0 pt-5">
+            <div className="sticky top-0 pt-10">
               <div className="relative">
                 <h3 className="mb-6 font-playfair text-xl font-bold text-gray-900 dark:text-white">
                   News Timeline
@@ -399,18 +467,19 @@ export default function PublicGazetteSharePage() {
 
                 {Object.keys(digestGrouped).length > 0 && (
                   <div className="space-y-6">
-                    {Object.keys(digestGrouped).map((date) => (
+                    {Object.keys(digestGrouped).map((date, index) => (
+                      // (!selectedDate && index === 0): to selected when first load
+
                       <button
                         key={date}
-                        onClick={() => {
-                          handleDateSelect(date)
-                          scrollToDate(date)
-                        }}
-                        className="relative w-full">
+                        id={date}
+                        onClick={() => scrollToDate(date)}
+                        className="timeline relative w-full">
                         <button
                           className={cn(
-                            'absolute left-2 h-4 w-4 rounded-full border-2 border-white bg-gray-200 shadow-md transition-all hover:scale-110 dark:bg-gray-500',
-                            selectedDate === date && 'bg-blue-500 dark:bg-blue-700',
+                            `${date}-button absolute left-2 h-4 w-4 rounded-full border-2 border-white bg-gray-200 shadow-md transition-all hover:scale-110 dark:bg-gray-500`,
+                            (selectedDate === date || (!selectedDate && index === 0)) &&
+                              'bg-blue-500 dark:bg-blue-700',
                           )}></button>
                         <div className="ml-10 text-left font-medium transition-opacity hover:opacity-80">
                           <div className="font-medium text-gray-700 dark:text-gray-300">
