@@ -213,6 +213,13 @@ export default function PublicGazetteSharePage() {
   }, [params.gazette_key, searchParams])
 
   useEffect(() => {
+    const colorTheme = localStorage.getItem('gazette-color-theme')
+    if (colorTheme) {
+      setSelectedColorTheme(colorTheme)
+    }
+  }, [])
+
+  useEffect(() => {
     const handleScroll = () => {
       const navLinkEls = document.querySelectorAll('.timeline')
       const sectionEls = document.querySelectorAll('.digest-section')
@@ -320,7 +327,10 @@ export default function PublicGazetteSharePage() {
                     <button
                       key={color.name}
                       type="button"
-                      onClick={() => setSelectedColorTheme(color.name)}
+                      onClick={() => {
+                        localStorage.setItem('gazette-color-theme', color.name)
+                        setSelectedColorTheme(color.name)
+                      }}
                       className={`flex w-full items-center gap-2 rounded-lg p-2 text-left transition-colors ${
                         selectedColorTheme === color.name
                           ? 'bg-gray-100 dark:bg-gray-700'
@@ -415,40 +425,28 @@ export default function PublicGazetteSharePage() {
                         {digest.title}
                       </h3>
 
-                      {/* Tags */}
-                      {digest.tags.length > 0 && (
-                        <div className="mb-2 flex flex-wrap gap-1">
-                          {digest.tags.map((tag, index) => (
-                            <Badge key={index} variant="secondary">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
                       {/* Content */}
                       <div
                         className={`0 mb-4 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                         <MarkdownRenderer>{digest.body}</MarkdownRenderer>
                       </div>
 
-                      {/* Labels */}
-                      {Object.entries(digest.labels).length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {Object.entries(digest.labels).map(([key, value], index) => (
-                            <Badge key={index} variant="outline">
-                              {key}:{' '}
-                              {typeof value === 'object'
-                                ? JSON.stringify(value)
-                                : String(value)}
+                      {/* Tags */}
+                      {digest.tags.length > 0 && (
+                        <div className="mt-6 flex flex-wrap justify-end gap-1">
+                          {digest.tags.map((tag, index) => (
+                            <Badge key={index} variant="secondary">
+                              <span className="text-xs font-normal">{tag}</span>
                             </Badge>
                           ))}
                         </div>
                       )}
 
                       {digest.status === 'draft' && (
-                        <div className="mt-4 flex justify-end">
-                          <Badge>{digest.status}</Badge>
+                        <div className="mt-3 flex justify-end">
+                          <Badge>
+                            <span className="font-normal">{digest.status}</span>
+                          </Badge>
                         </div>
                       )}
                     </div>
