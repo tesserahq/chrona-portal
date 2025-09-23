@@ -1,8 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
-import EmptyContent from '@/components/misc/EmptyContent'
+import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import EmptyContent from '@/components/misc/EmptyContent'
+import { LabelTooltip } from '@/components/misc/LabelTooltip'
+import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -15,6 +18,11 @@ import {
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
+import { IDigestGenerator } from '@/types/digest'
+import { IPaging } from '@/types/pagination'
+import { ensureCanonicalPagination } from '@/utils/pagination.server'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import {
   Link,
   useActionData,
@@ -23,16 +31,9 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { format, formatDistance } from 'date-fns'
-import { EllipsisVertical, EyeIcon, Pencil, Tag, Trash2 } from 'lucide-react'
+import { EllipsisVertical, EyeIcon, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { redirectWithToast } from '@/utils/toast.server'
 import { toast } from 'sonner'
-import { ensureCanonicalPagination } from '@/utils/pagination.server'
-import { IPaging } from '@/types/pagination'
-import { IDigestGenerator } from '@/types/digest'
-import { LabelTooltip } from '@/components/misc/LabelTooltip'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -154,11 +155,11 @@ export default function DigestGeneratorsPage() {
         const config = row.original
         return (
           <div className="flex items-center gap-2">
-            <div className="">
+            <div className="max-w-[200px]">
               <Link
                 to={`/projects/${params.project_id}/digest-generator/${config.id}`}
-                className="truncate font-medium text-foreground hover:text-primary hover:underline">
-                {config.title}
+                className="button-link">
+                <p className="truncate">{config.title}</p>
               </Link>
             </div>
           </div>
@@ -213,42 +214,41 @@ export default function DigestGeneratorsPage() {
       accessorKey: 'tags',
       header: 'Tags',
       cell: ({ row }) => {
-        const filterTags = row.original.tags || []
-        const firstTag = filterTags[0]
-        const remaining = filterTags.slice(1)
+        const tags = row.original.tags || []
 
         return (
-          <div className="flex flex-wrap items-center gap-1">
-            {firstTag && (
-              <Badge key={firstTag} variant="secondary" className="text-xs">
-                <Tag className="mr-1 h-3 w-3" />
-                {firstTag}
-              </Badge>
-            )}
+          <TagsPreview tags={tags} />
+          // <div className="flex flex-wrap items-center gap-1">
+          //   {firstTag && (
+          //     <Badge key={firstTag} variant="secondary" className="text-xs">
+          //       <Tag className="mr-1 h-3 w-3" />
+          //       {firstTag}
+          //     </Badge>
+          //   )}
 
-            {remaining.length > 0 && (
-              <TooltipProvider delayDuration={100}>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Badge variant="outline" className="cursor-pointer text-xs">
-                      +{remaining.length}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent className="px-3 py-2" side="bottom">
-                    <h1 className="mb-2 font-medium">Tags</h1>
-                    <div className="flex max-w-xs flex-wrap gap-1">
-                      {remaining.map((t) => (
-                        <Badge key={t} variant="secondary" className="text-xs">
-                          <Tag className="mr-1 h-3 w-3" />
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
+          //   {remaining.length > 0 && (
+          //     <TooltipProvider delayDuration={100}>
+          //       <Tooltip>
+          //         <TooltipTrigger>
+          //           <Badge variant="outline" className="cursor-pointer text-xs">
+          //             +{remaining.length}
+          //           </Badge>
+          //         </TooltipTrigger>
+          //         <TooltipContent className="px-3 py-2" side="bottom">
+          //           <h1 className="mb-2 font-medium">Tags</h1>
+          //           <div className="flex max-w-xs flex-wrap gap-1">
+          //             {remaining.map((t) => (
+          //               <Badge key={t} variant="secondary" className="text-xs">
+          //                 <Tag className="mr-1 h-3 w-3" />
+          //                 {t}
+          //               </Badge>
+          //             ))}
+          //           </div>
+          //         </TooltipContent>
+          //       </Tooltip>
+          //     </TooltipProvider>
+          //   )}
+          // </div>
         )
       },
     },
@@ -272,25 +272,10 @@ export default function DigestGeneratorsPage() {
       header: 'Created',
       size: 100,
       cell: ({ row }) => {
-        const entry = row.original
-        const entryUtcDate = entry.created_at + 'Z'
+        const { created_at } = row.original
+        const entryUtcDate = created_at + 'Z'
 
-        return (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entryUtcDate), new Date(), {
-                    includeSeconds: true,
-                  })}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span>Created At {format(entryUtcDate, 'PPpp')}</span>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )
+        return <DatePreview label="Created At" date={entryUtcDate} />
       },
     },
     {
@@ -298,25 +283,10 @@ export default function DigestGeneratorsPage() {
       header: 'Updated',
       size: 100,
       cell: ({ row }) => {
-        const entry = row.original
-        const entryUtcDate = entry.updated_at + 'Z'
+        const { updated_at } = row.original
+        const entryUtcDate = updated_at + 'Z'
 
-        return (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="text-xs text-muted-foreground">
-                  {formatDistance(new Date(entryUtcDate), new Date(), {
-                    includeSeconds: true,
-                  })}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                <span>Updated At {format(entryUtcDate, 'PPpp')}</span>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )
+        return <DatePreview label="Updated At" date={entryUtcDate} />
       },
     },
   ]
