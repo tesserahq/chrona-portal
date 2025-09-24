@@ -62,7 +62,7 @@ export interface IEntry {
   source: IEntrySource
   source_author: IEntrySourceAuthor
   source_assignee: IEntrySourceAssignee
-  entry_updates: Comment[]
+  entry_updates: EntryUpdates[]
 }
 
 export interface IEntriesResponse {
@@ -70,7 +70,7 @@ export interface IEntriesResponse {
 }
 
 // Comments
-export interface Comment {
+export interface EntryUpdates {
   body: string
   source_author_id: string
   entry_id: string

@@ -127,7 +127,7 @@ export default function EntryDetailPage() {
               <span className="font-medium">
                 {entry.source_assignee?.author.display_name}
               </span>
-              <span>@{entry.source_assignee?.author.email}</span>
+              <span>{entry.source_assignee?.author.email}</span>
             </div>
           )}
           <div className="mt-3 flex gap-1">
@@ -171,7 +171,7 @@ export default function EntryDetailPage() {
                       {entryUpdate.source_author.author.display_name}
                     </span>
                     <span className="text-muted-foreground">
-                      @{entryUpdate.source_author.author.email}
+                      {entryUpdate.source_author.author.email}
                     </span>
                     <span className="text-muted-foreground">•</span>
                     <span className="text-muted-foreground">
