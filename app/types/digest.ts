@@ -1,3 +1,5 @@
+import { IEntry } from './entry'
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export interface IDigestGenerator {
   title: string
@@ -24,7 +26,6 @@ export interface IDigest {
   entries_ids: string[]
   tags: string[]
   labels: Record<string, any>
-  comments_ids: string[]
   from_date: string
   to_date: string
   digest_generation_config_id: string
@@ -37,6 +38,7 @@ export interface IDigest {
   ui_format?: {
     color?: string
   }
+  entries?: IEntry[]
 }
 
 export interface IDigestPaginationResponse {
