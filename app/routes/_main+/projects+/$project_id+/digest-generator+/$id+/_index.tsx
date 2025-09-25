@@ -8,8 +8,9 @@ import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigestGenerator } from '@/types/digest'
 import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import cronstrue from 'cronstrue'
 import { format } from 'date-fns'
-import { ArrowLeft, CalendarDays, Tag } from 'lucide-react'
+import { ArrowLeft, CalendarDays } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function loader() {
@@ -67,6 +68,10 @@ export default function DigestGeneratorDetailPage() {
   }
 
   const hasLabels = config.labels && Object.keys(config.labels).length > 0
+  const hasTags = config.tags && config.tags.length > 0
+  const hasFilterLabels =
+    config.filter_labels && Object.keys(config.filter_labels).length > 0
+  const hasFilterTags = config.filter_tags && config.filter_tags.length > 0
 
   return (
     <div className="coreui-content-center animate-slide-up">
@@ -88,26 +93,29 @@ export default function DigestGeneratorDetailPage() {
             </div>
           </div>
 
-          {/* Labels */}
-          {hasLabels && (
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(config.labels).map(([key, value]) => (
-                <Badge key={key} variant="secondary">
-                  {key}: {String(value)}
+          {/* Tags */}
+          {hasTags && (
+            <div className="flex flex-wrap items-center gap-1">
+              {config.tags.map((tag, index) => (
+                <Badge key={index} variant="outline">
+                  <span className="font-normal">{tag}</span>
                 </Badge>
               ))}
             </div>
           )}
 
-          {/* Tags */}
-          <div className="flex flex-wrap items-center gap-1">
-            <Tag className="h-4 w-4 text-muted-foreground" />
-            {(config.tags || []).map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
+          {/* Labels */}
+          {hasLabels && (
+            <div className="flex flex-wrap gap-1">
+              {Object.entries(config.labels).map(([key, value]) => (
+                <Badge key={key} variant="secondary">
+                  <span className="font-normal">
+                    {key}: {String(value)}
+                  </span>
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardHeader>
 
         <CardContent className="p-6 pt-0">
@@ -116,25 +124,52 @@ export default function DigestGeneratorDetailPage() {
               <div className="text-xs text-muted-foreground">Timezone</div>
               <div className="text-sm text-foreground">{config.timezone || '-'}</div>
             </div>
+
             <div>
               <div className="text-xs text-muted-foreground">Generate Empty Digest</div>
               <div className="text-sm text-foreground">
                 {config.generate_empty_digest ? 'Yes' : 'No'}
               </div>
             </div>
+
             <div>
               <div className="text-xs text-muted-foreground">Cron Expression</div>
-              <div className="break-words text-sm text-foreground">
-                {config.cron_expression || '-'}
+              <div className="text-sm text-foreground">
+                {cronstrue.toString(config.cron_expression)}
               </div>
+            </div>
+
+            <div>
+              <div className="mb-1 text-xs text-muted-foreground">Filter Tags</div>
+              {hasFilterTags && (
+                <div className="flex flex-wrap items-center gap-1">
+                  {config.filter_tags.map((tag, index) => (
+                    <Badge key={index} variant="outline">
+                      <span className="font-normal">{tag}</span>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-1 text-xs text-muted-foreground">Filter Labels</div>
+              {hasFilterLabels &&
+                Object.entries(config.filter_labels).map(([key, value]) => (
+                  <Badge key={key} variant="secondary">
+                    <span className="font-normal">
+                      {key}: {String(value)}
+                    </span>
+                  </Badge>
+                ))}
             </div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-5">
             <div className="mb-1 text-xs text-muted-foreground">System Prompt</div>
             <div className="prose prose-sm max-w-none text-foreground">
               <p className="whitespace-pre-wrap text-pretty leading-relaxed">
-                {config.system_prompt || '—'}
+                {config.system_prompt}
               </p>
             </div>
           </div>
