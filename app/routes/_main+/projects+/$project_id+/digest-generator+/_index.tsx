@@ -156,6 +156,9 @@ export default function DigestGeneratorsPage() {
         const config = row.original
         return (
           <div className="flex items-center gap-2">
+            <div
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ background: config.ui_format.color }}></div>
             <div className="max-w-[200px]">
               <Link
                 to={`/projects/${params.project_id}/digest-generator/${config.id}`}
