@@ -108,12 +108,12 @@ export default function DigestsPage() {
       header: 'Title',
       size: 300,
       cell: ({ row }) => {
-        const { title, id, body, ui_format } = row.original
+        const { title, id, body, digest_generation_config } = row.original
         return (
           <div className="flex items-center gap-3">
             <div
               className="h-2.5 w-2.5 rounded-full"
-              style={{ background: ui_format?.color }}></div>
+              style={{ background: digest_generation_config.ui_format?.color }}></div>
             <div className="max-w-[300px] lg:max-w-[500px]">
               <Link
                 to={`/projects/${params.project_id}/digests/${id}`}
