@@ -417,7 +417,7 @@ export default function PublicGazetteSharePage() {
                           : 'border-gray-100 bg-white'
                       }`}
                       style={{
-                        borderLeft: `4px solid ${digest.ui_format?.color}`,
+                        borderLeft: `4px solid ${digest.digest_generation_config.ui_format?.color}`,
                       }}>
                       {/* Title */}
                       <h3 className="mb-3 font-playfair text-xl font-semibold leading-tight text-gray-900 dark:text-white">

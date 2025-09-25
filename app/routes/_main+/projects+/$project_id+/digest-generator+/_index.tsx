@@ -198,7 +198,7 @@ export default function DigestGeneratorsPage() {
     },
     {
       accessorKey: 'generate_empty_digest',
-      header: 'Generate Empty Digest',
+      header: 'Empty Digest',
       size: 150,
       cell: ({ row }) => {
         return (
@@ -209,47 +209,12 @@ export default function DigestGeneratorsPage() {
       },
     },
     {
-      accessorKey: 'system_prompt',
-      header: 'System Prompt',
-      size: 90,
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span className="block max-w-28 cursor-pointer truncate text-muted-foreground">
-                  {entry.system_prompt}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-lg">{entry.system_prompt}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )
-      },
-    },
-    {
       accessorKey: 'tags',
       header: 'Tags',
       cell: ({ row }) => {
         const tags = row.original.tags || []
 
         return <TagsPreview tags={tags} />
-      },
-    },
-    {
-      accessorKey: 'labels',
-      header: 'Labels',
-      size: 100,
-      cell: ({ row }) => {
-        const isValidLabels: boolean =
-          row.original.labels !== null && Object.keys(row.original.labels).length > 0
-
-        return (
-          isValidLabels && (
-            <LabelTooltip labels={Object.entries(row.original.labels)} side="left" />
-          )
-        )
       },
     },
     {

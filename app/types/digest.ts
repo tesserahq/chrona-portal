@@ -29,6 +29,7 @@ export interface IDigest {
   from_date: string
   to_date: string
   digest_generation_config_id: string
+  digest_generation_config: IDigestGenerator
   project_id: string
   id: string
   status: string

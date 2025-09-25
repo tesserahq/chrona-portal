@@ -171,7 +171,7 @@ export default function DigestDetailPage() {
             {digest?.title}
           </h1>
 
-          <Card style={{ borderLeft: `4px solid ${digest?.ui_format?.color}` }}>
+          <Card style={{ borderLeft: `4px solid ${digest?.digest_generation_config?.ui_format?.color}` }}>
             <CardHeader className="space-y-3">
               {/* Digest Metadata */}
               <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
