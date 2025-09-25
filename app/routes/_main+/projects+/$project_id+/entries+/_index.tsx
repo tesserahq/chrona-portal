@@ -140,14 +140,10 @@ export default function ProjectEntriesPage() {
             <div className="max-w-[300px]">
               <Link
                 to={`/projects/${params.project_id}/entries/${entry.id}`}
-                className="font-medium text-foreground hover:text-primary hover:underline">
+                className="button-link">
                 <p className="truncate">{entry.title}</p>
               </Link>
-              <p className="truncate text-xs text-muted-foreground">
-                {entry.body && entry.body.length > 100
-                  ? entry.body.substring(0, 100) + '...'
-                  : entry.body}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{entry.body}</p>
             </div>
           </div>
         )
