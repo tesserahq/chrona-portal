@@ -133,7 +133,7 @@ export default function DigestGeneratorDetailPage() {
             </div>
 
             <div>
-              <div className="text-xs text-muted-foreground">Cron Expression</div>
+              <div className="text-xs text-muted-foreground">Cron</div>
               <div className="text-sm text-foreground">
                 {cronstrue.toString(config.cron_expression)}
               </div>

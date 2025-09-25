@@ -177,7 +177,7 @@ export default function DigestGeneratorsPage() {
     },
     {
       accessorKey: 'cron_expression',
-      header: 'Chrone Expression',
+      header: 'Cron',
       size: 150,
       cell: ({ row }) => {
         return (
