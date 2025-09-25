@@ -4,7 +4,7 @@ import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import EmptyContent from '@/components/misc/EmptyContent'
-import { LabelTooltip } from '@/components/misc/LabelTooltip'
+import { StatusBadge } from '@/components/misc/StatusBadge'
 import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -137,14 +137,13 @@ export default function DigestsPage() {
       },
     },
     {
-      accessorKey: 'labels',
-      header: 'Labels',
+      accessorKey: 'status',
+      header: 'Status',
       cell: ({ row }) => {
-        const isValidLabels: boolean =
-          row.original.labels !== null && Object.keys(row.original.labels).length > 0
+        const status = row.original.status
 
         return (
-          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
+          status && <StatusBadge status={status} />
         )
       },
     },
