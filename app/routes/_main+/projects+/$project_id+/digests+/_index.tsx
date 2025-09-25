@@ -1,32 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import { DataTable } from '@/components/misc/Datatable'
+import DatePreview from '@/components/misc/DatePreview'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import EmptyContent from '@/components/misc/EmptyContent'
-import { Pagination } from '@/components/misc/Pagination'
-import { Badge } from '@/components/ui/badge'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { LabelTooltip } from '@/components/misc/LabelTooltip'
+import { TagsPreview } from '@/components/misc/TagsPreview'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigest, IDigestPaginationResponse } from '@/types/digest'
 import { IPagingInfo } from '@/types/pagination'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
-import { LoaderFunctionArgs } from '@remix-run/node'
-import { Link, useLoaderData, useParams, useSearchParams } from '@remix-run/react'
-import { format } from 'date-fns'
-import { Calendar, Tag } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from '@remix-run/react'
+import { ColumnDef } from '@tanstack/react-table'
+import { EllipsisVertical, EyeIcon, Trash2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -46,7 +47,9 @@ export function loader({ request }: LoaderFunctionArgs) {
 
 export default function DigestsPage() {
   const { apiUrl, nodeEnv, size, page } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const params = useParams()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digests, setDigests] = useState<IDigest[]>([])
@@ -56,8 +59,114 @@ export default function DigestsPage() {
     pages: 1,
     total: 0,
   })
+  const [digestDelete, setDigestDelete] = useState<IDigest | null>(null)
   const { token } = useApp()
   const handleApiError = useHandleApiError()
+  const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+
+  const columns: ColumnDef<IDigest>[] = [
+    {
+      accessorKey: 'id',
+      header: '',
+      size: 5,
+      cell: ({ row }) => {
+        const digest = row.original
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="ghost">
+                <EllipsisVertical />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="right" className="w-44 p-2">
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() =>
+                  navigate(`/projects/${params.project_id}/digests/${digest.id}`)
+                }>
+                <EyeIcon />
+                <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setDigestDelete(digest)
+                }}>
+                <Trash2 />
+                <span>Delete</span>
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )
+      },
+    },
+    {
+      accessorKey: 'title',
+      header: 'Title',
+      size: 300,
+      cell: ({ row }) => {
+        const { title, id, body, ui_format } = row.original
+        return (
+          <div className="flex items-center gap-3">
+            <div
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ background: ui_format?.color }}></div>
+            <div className="max-w-[300px] lg:max-w-[500px]">
+              <Link
+                to={`/projects/${params.project_id}/digests/${id}`}
+                className="button-link">
+                <p className="truncate">{title}</p>
+              </Link>
+              <p className="truncate text-xs text-muted-foreground">{body}</p>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      size: 250,
+      cell: ({ row }) => {
+        const tags = row.original.tags || []
+
+        return <TagsPreview tags={tags} />
+      },
+    },
+    {
+      accessorKey: 'labels',
+      header: 'Labels',
+      cell: ({ row }) => {
+        const isValidLabels: boolean =
+          row.original.labels !== null && Object.keys(row.original.labels).length > 0
+
+        return (
+          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
+        )
+      },
+    },
+    {
+      accessorKey: 'source_created_at',
+      header: 'Created',
+      size: 130,
+      cell: ({ row }) => {
+        const { created_at } = row.original
+        return <DatePreview label="Created At" date={created_at} />
+      },
+    },
+    {
+      accessorKey: 'source_updated_at',
+      header: 'Updated',
+      size: 130,
+      cell: ({ row }) => {
+        const { updated_at } = row.original
+        return <DatePreview label="Updated At" date={updated_at} />
+      },
+    },
+  ]
 
   const fetchDigests = async () => {
     try {
@@ -90,6 +199,17 @@ export default function DigestsPage() {
     }
   }, [token, params.project_id, searchParams])
 
+  useEffect(() => {
+    if (actionData?.success) {
+      // show success message
+      toast.success(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+      // reload digests
+      fetchDigests()
+    }
+  }, [actionData])
+
   if (isLoading) {
     return <AppPreloader className="lg:h-[600px]" />
   }
@@ -108,134 +228,46 @@ export default function DigestsPage() {
         />
       )}
 
-      {digests?.length > 0 && (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {digests.map((digest) => (
-              <Card
-                key={digest.id}
-                className="flex h-full flex-col overflow-hidden shadow-card transition-shadow hover:shadow-lg">
-                <CardHeader className="pb-3">
-                  <Link
-                    to={`/projects/${params.project_id}/digests/${digest.id}`}
-                    className="button-link">
-                    <CardTitle className="line-clamp-2 text-lg">{digest.title}</CardTitle>
-                  </Link>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {format(digest.created_at, 'PP')}
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-1 flex-col px-6">
-                  <div className="mb-4 line-clamp-3 flex-1 text-pretty leading-relaxed text-muted-foreground">
-                    {digest.body}
-                  </div>
+      <DataTable columns={columns} data={digests} meta={pagination} />
 
-                  {/* Tags and Labels - Always at bottom */}
-                  <div className="mt-auto space-y-2">
-                    {/* Tags */}
-                    {digest.tags.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1">
-                        {digest.tags.slice(0, 2).map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        <TooltipProvider delayDuration={100}>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              {digest.tags.length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{digest.tags.length - 2}
-                                </Badge>
-                              )}
-                            </TooltipTrigger>
-                            <TooltipContent
-                              className="px-3 py-2"
-                              side="bottom"
-                              align="start">
-                              <h1 className="mb-2 font-medium">Tags</h1>
-                              <div className="flex flex-col items-start space-y-1">
-                                {digest.tags.slice(2).map((tag) => {
-                                  return (
-                                    <Badge
-                                      key={tag}
-                                      variant="secondary"
-                                      className="text-xs">
-                                      <Tag className="mr-1 h-3 w-3" />
-                                      {tag}
-                                    </Badge>
-                                  )
-                                })}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    )}
-
-                    {/* Labels */}
-                    {Object.keys(digest.labels).length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {Object.entries(digest.labels)
-                          .slice(0, 2)
-                          .map(([key, value], index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {key}:{' '}
-                              {typeof value === 'object'
-                                ? JSON.stringify(value)
-                                : String(value)}
-                            </Badge>
-                          ))}
-                        <TooltipProvider delayDuration={100}>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              {Object.keys(digest.labels).length > 2 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{Object.keys(digest.labels).length - 2}
-                                </Badge>
-                              )}
-                            </TooltipTrigger>
-                            <TooltipContent
-                              className="px-3 py-2"
-                              side="bottom"
-                              align="start">
-                              <h1 className="mb-2 font-medium">Labels</h1>
-                              <div className="flex flex-col items-start space-y-1">
-                                {Object.entries(digest.labels)
-                                  .slice(2)
-                                  .map(([key, value], index) => (
-                                    <Badge
-                                      key={index}
-                                      variant="outline"
-                                      className="text-xs">
-                                      {key}:{' '}
-                                      {typeof value === 'object'
-                                        ? JSON.stringify(value)
-                                        : String(value)}
-                                    </Badge>
-                                  ))}
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter className="justify-end">
-                  {digest.status === 'draft' && <Badge>{digest.status}</Badge>}
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <div className="mt-8">
-            <Pagination meta={pagination} />
-          </div>
-        </>
-      )}
+      <ModalDelete
+        ref={deleteRef}
+        alert="Digest"
+        title={`Remove "${digestDelete?.title}" from digests`}
+        data={{
+          project_id: params.project_id,
+          id: digestDelete?.id,
+          token: token!,
+        }}
+      />
     </div>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { project_id, token, id } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/digests/${id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return { success: true, message: `Digest deleted successfully` }
+    }
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return redirectWithToast(`/projects/${project_id}/digests`, {
+      type: 'error',
+      title: 'Error',
+      description: `${convertError.status} - ${convertError.error}`,
+    })
+  }
 }

@@ -34,6 +34,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { EllipsisVertical, EyeIcon, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import cronstrue from 'cronstrue'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -155,6 +156,9 @@ export default function DigestGeneratorsPage() {
         const config = row.original
         return (
           <div className="flex items-center gap-2">
+            <div
+              className="h-2.5 w-2.5 rounded-full"
+              style={{ background: config.ui_format.color }}></div>
             <div className="max-w-[200px]">
               <Link
                 to={`/projects/${params.project_id}/digest-generator/${config.id}`}
@@ -173,13 +177,29 @@ export default function DigestGeneratorsPage() {
     },
     {
       accessorKey: 'cron_expression',
-      header: 'Chrone Expression',
-      size: 154,
+      header: 'Cron',
+      size: 150,
+      cell: ({ row }) => {
+        return (
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger>
+                <span className="block max-w-28 cursor-pointer truncate text-muted-foreground">
+                  {cronstrue.toString(row.original.cron_expression)}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-lg">
+                {cronstrue.toString(row.original.cron_expression)}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
     },
     {
       accessorKey: 'generate_empty_digest',
       header: 'Generate Empty Digest',
-      size: 180,
+      size: 150,
       cell: ({ row }) => {
         return (
           <Badge variant="secondary">
@@ -202,9 +222,7 @@ export default function DigestGeneratorsPage() {
                   {entry.system_prompt}
                 </span>
               </TooltipTrigger>
-              <TooltipContent className="max-w-lg" side="bottom">
-                {entry.system_prompt}
-              </TooltipContent>
+              <TooltipContent className="max-w-lg">{entry.system_prompt}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )
@@ -216,40 +234,7 @@ export default function DigestGeneratorsPage() {
       cell: ({ row }) => {
         const tags = row.original.tags || []
 
-        return (
-          <TagsPreview tags={tags} />
-          // <div className="flex flex-wrap items-center gap-1">
-          //   {firstTag && (
-          //     <Badge key={firstTag} variant="secondary" className="text-xs">
-          //       <Tag className="mr-1 h-3 w-3" />
-          //       {firstTag}
-          //     </Badge>
-          //   )}
-
-          //   {remaining.length > 0 && (
-          //     <TooltipProvider delayDuration={100}>
-          //       <Tooltip>
-          //         <TooltipTrigger>
-          //           <Badge variant="outline" className="cursor-pointer text-xs">
-          //             +{remaining.length}
-          //           </Badge>
-          //         </TooltipTrigger>
-          //         <TooltipContent className="px-3 py-2" side="bottom">
-          //           <h1 className="mb-2 font-medium">Tags</h1>
-          //           <div className="flex max-w-xs flex-wrap gap-1">
-          //             {remaining.map((t) => (
-          //               <Badge key={t} variant="secondary" className="text-xs">
-          //                 <Tag className="mr-1 h-3 w-3" />
-          //                 {t}
-          //               </Badge>
-          //             ))}
-          //           </div>
-          //         </TooltipContent>
-          //       </Tooltip>
-          //     </TooltipProvider>
-          //   )}
-          // </div>
-        )
+        return <TagsPreview tags={tags} />
       },
     },
     {

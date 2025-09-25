@@ -36,6 +36,7 @@
         "compression": "^1.7.5",
         "cookie": "^1.0.2",
         "core-ui": "git+https://github.com/estate-buddy-tech/core-ui.git",
+        "cronstrue": "^3.3.0",
         "cross-env": "^7.0.3",
         "curl-generator": "^0.4.2",
         "date-fns": "^4.1.0",
@@ -843,6 +844,8 @@
     "core-ui": ["core-ui@github:estate-buddy-tech/core-ui#5239bdd", { "dependencies": { "axios": "^1.10.0" }, "peerDependencies": { "@remix-run/react": "^2.15.3", "class-variance-authority": "^0.7.1", "react": "^18.3.1", "react-dom": "^18.3.1", "tailwindcss": "^4.1.11" } }, "estate-buddy-tech-core-ui-5239bdd"],
 
     "core-util-is": ["core-util-is@1.0.3", "", {}, "sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ=="],
+
+    "cronstrue": ["cronstrue@3.3.0", "", { "bin": { "cronstrue": "bin/cli.js" } }, "sha512-iwJytzJph1hosXC09zY8F5ACDJKerr0h3/2mOxg9+5uuFObYlgK0m35uUPk4GCvhHc2abK7NfnR9oMqY0qZFAg=="],
 
     "cross-env": ["cross-env@7.0.3", "", { "dependencies": { "cross-spawn": "^7.0.1" }, "bin": { "cross-env": "src/bin/cross-env.js", "cross-env-shell": "src/bin/cross-env-shell.js" } }, "sha512-+/HKd6EgcQCJGh2PSjZuUitQBQynKor4wrFbRg4DtAgS1aWO+gU52xpH7M9ScGgXSYmAVS9bIJ8EzuaGw0oNAw=="],
 

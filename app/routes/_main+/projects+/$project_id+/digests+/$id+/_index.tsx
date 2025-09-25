@@ -289,7 +289,8 @@ export default function DigestDetailPage() {
 
             <div className="grid gap-2 lg:grid-cols-3">
               {/* Show author if it's not the same as the assignee */}
-              {entry?.source_author.author.id !== entry?.source_assignee.author.id && (
+              {entry?.source_author?.author?.id !==
+                entry?.source_assignee?.author?.id && (
                 <div>
                   <p className="mb-2 text-xs font-semibold">Author</p>
                   <div className="flex items-center gap-2">
