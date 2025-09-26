@@ -50,7 +50,15 @@ export interface IEntry {
   external_id: string
   tags: string[]
   labels: Record<string, string>
-  meta_data: Record<string, unknown>
+  meta_data: {
+    links?: {
+      href: string
+      text: string
+      icon?: string
+    }[]
+    number?: number
+    severity?: string
+  }
   source_author_id: string
   source_assignee_id: string
   project_id: string

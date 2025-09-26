@@ -34,6 +34,10 @@ import { getToastSession } from '@/utils/toast.server'
 import CoreUILayoutCSS from 'node_modules/core-ui/src/styles/layout.css?url'
 import { ProgressBar } from './components/misc/ProgressBar'
 import { AppProvider } from './context/AppContext'
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { fab } from '@fortawesome/free-brands-svg-icons'
+
+library.add(fab)
 
 export const handle = { i18n: ['translation'] }
 
