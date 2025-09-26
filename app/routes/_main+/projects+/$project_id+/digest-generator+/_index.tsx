@@ -3,6 +3,7 @@ import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import BackfillDialog from '@/components/misc/Dialog/DigestGeneratorBackfill'
 import EmptyContent from '@/components/misc/EmptyContent'
 import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Badge } from '@/components/ui/badge'
@@ -23,6 +24,7 @@ import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import {
+  Form,
   Link,
   useActionData,
   useLoaderData,
@@ -30,7 +32,14 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, Pencil, Trash2 } from 'lucide-react'
+import {
+  DatabaseBackup,
+  EllipsisVertical,
+  EyeIcon,
+  Pencil,
+  Save,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import cronstrue from 'cronstrue'
@@ -61,7 +70,9 @@ export default function DigestGeneratorsPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digestConfigs, setDigestConfigs] = useState<IPaging<IDigestGenerator>>()
   const [configDelete, setConfigDelete] = useState<IDigestGenerator>()
+  const [configBackfill, setConfigBackfill] = useState<IDigestGenerator>()
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+  const backfillRef = useRef<React.ElementRef<typeof BackfillDialog>>(null)
 
   const fetchDigestConfigs = async () => {
     setIsLoading(true)
@@ -92,6 +103,7 @@ export default function DigestGeneratorsPage() {
       toast.success(actionData.message)
       // close modal
       deleteRef?.current?.onClose()
+      backfillRef?.current?.onClose()
       // refresh data
       fetchDigestConfigs()
     }
@@ -132,6 +144,26 @@ export default function DigestGeneratorsPage() {
                 <Pencil />
                 <span>Edit</span>
               </Button>
+              <Form method="POST">
+                <input type="hidden" name="form_type" value="draft" />
+                <input type="hidden" name="id" value={entry.id} />
+                <input type="hidden" name="token" value={token!} />
+                <input type="hidden" name="project_id" value={params.project_id} />
+                <Button variant="ghost" className="flex w-full justify-start">
+                  <Save />
+                  <span>Draft</span>
+                </Button>
+              </Form>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  backfillRef.current?.onOpen()
+                  setConfigBackfill(entry)
+                }}>
+                <DatabaseBackup />
+                <span>Backfill</span>
+              </Button>
               <Button
                 variant="ghost"
                 className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
@@ -150,7 +182,6 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'title',
       header: 'Title',
-      size: 80,
       cell: ({ row }) => {
         const config = row.original
         return (
@@ -177,13 +208,12 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'cron_expression',
       header: 'Cron',
-      size: 150,
       cell: ({ row }) => {
         return (
           <TooltipProvider delayDuration={100}>
             <Tooltip>
               <TooltipTrigger>
-                <span className="block max-w-28 cursor-pointer truncate text-muted-foreground">
+                <span className="block max-w-48 cursor-pointer truncate text-muted-foreground">
                   {cronstrue.toString(row.original.cron_expression)}
                 </span>
               </TooltipTrigger>
@@ -198,7 +228,7 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'generate_empty_digest',
       header: 'Empty Digest',
-      size: 150,
+      size: 100,
       cell: ({ row }) => {
         return (
           <Badge variant="secondary">
@@ -281,6 +311,16 @@ export default function DigestGeneratorsPage() {
           token: token!,
         }}
       />
+
+      <BackfillDialog
+        ref={backfillRef}
+        data={{
+          project_id: params.project_id,
+          id: configBackfill?.id,
+          token: token!,
+          title: configBackfill?.title || '', // just for title not send into API
+        }}
+      />
     </div>
   )
 }
@@ -290,9 +330,36 @@ export async function action({ request }: ActionFunctionArgs) {
   const nodeEnv = process.env.NODE_ENV
   const formData = await request.formData()
 
-  const { project_id, token, id } = Object.fromEntries(formData)
+  const { project_id, token, id, form_type, days, force } = Object.fromEntries(formData)
 
   try {
+    if (request.method === 'POST') {
+      if (form_type === 'draft') {
+        const url = `${apiUrl}/digest-generation-configs/${id}/draft`
+
+        await fetchApi(url, token as string, nodeEnv, {
+          method: 'POST',
+        })
+
+        return { success: true, message: `Digest generator drafted successfully` }
+      }
+
+      if (form_type === 'backfill') {
+        const url = `${apiUrl}/digest-generation-configs/${id}/backfill`
+        const payload = {
+          days: Number(days),
+          force: force === 'on',
+        }
+
+        await fetchApi(url, token as string, nodeEnv, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+
+        return { success: true, message: `Digest generator backfilled successfully` }
+      }
+    }
+
     if (request.method === 'DELETE') {
       const url = `${apiUrl}/digest-generation-configs/${id}`
 
