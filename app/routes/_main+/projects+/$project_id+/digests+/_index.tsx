@@ -217,15 +217,15 @@ export default function DigestsPage() {
         <h1 className="text-2xl font-bold dark:text-foreground">Digests</h1>
       </div>
 
-      {digests?.length === 0 && !isLoading && (
+      {digests?.length === 0 ? (
         <EmptyContent
           image="/images/empty-digest.png"
           title="No digests found"
           description="No digests have been created yet for this project."
         />
+      ) : (
+        <DataTable columns={columns} data={digests} meta={pagination} />
       )}
-
-      <DataTable columns={columns} data={digests} meta={pagination} />
 
       <ModalDelete
         ref={deleteRef}

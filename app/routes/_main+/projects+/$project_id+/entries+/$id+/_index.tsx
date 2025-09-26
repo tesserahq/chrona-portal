@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import { EntryUpdateCard } from '@/components/misc/EntryUpdateCard'
 import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
+import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IEntry } from '@/types/entry'
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { Link, useLoaderData, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
-import { ArrowLeft, CalendarDays, MessageSquare, Tag, User } from 'lucide-react'
+import { LinkIcon, MessageSquare } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 export function loader() {
@@ -24,7 +25,6 @@ export function loader() {
 export default function EntryDetailPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
   const params = useParams()
-  const navigate = useNavigate()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -53,172 +53,138 @@ export default function EntryDetailPage() {
 
   if (isLoading) return <AppPreloader />
 
-  if (!entry) {
-    return (
-      <div className="h-full animate-slide-up">
-        <div className="mb-5 flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/projects/${params.project_id}/entries`)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Entries
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="coreui-content-center animate-slide-up">
-      <Card className="coreui-card-center">
-        <CardHeader className="space-y-3">
-          <h1 className="text-balance text-2xl font-bold text-foreground">
-            {entry.title}
-          </h1>
-
-          {/* Issue Metadata */}
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1 text-xs">
-              <User className="h-4 w-4" />
-              <span className="font-medium">
-                {entry.source_author.author.display_name}
-              </span>
-              <span>@{entry.source_author.author.email}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <CalendarDays size={12} />
-              <span className="text-xs">
-                Created {format(entry.source_created_at, 'PPpp')}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <CalendarDays size={12} />
-              <span className="text-xs">
-                Updated {format(entry.source_updated_at, 'PPpp')}
-              </span>
-            </div>
-          </div>
-
-          {/* Labels */}
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(entry.labels).map(([key, value]) => (
-              <Badge key={key} variant="secondary">
-                {key}: {value}
-              </Badge>
-            ))}
-          </div>
-
-          {/* Tags */}
-          <div className="flex flex-wrap items-center gap-1">
-            <Tag className="h-4 w-4 text-muted-foreground" />
-            {entry.tags.map((tag, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-
-          {entry.source_assignee && (
-            <div className="mt-3 flex gap-1">
-              <span className="text-muted-foreground">Assignee: </span>
-              <User className="h-4 w-4" />
-              <span className="font-medium">
-                {entry.source_assignee?.author.display_name}
-              </span>
-              <span>{entry.source_assignee?.author.email}</span>
-            </div>
-          )}
-          <div className="mt-3 flex gap-1">
-            <span className="text-muted-foreground">Source: </span>
-            <span className="font-medium">{entry.source.name}</span>
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-6 pt-0">
-          <MarkdownRenderer>{entry.body}</MarkdownRenderer>
-        </CardContent>
-      </Card>
-
-      {/* Comments Section */}
-      <div className="coreui-card-center mt-4 space-y-4">
-        <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
-          <MessageSquare className="h-5 w-5" />
-          <span>Entry Updates ({entry.entry_updates.length})</span>
-        </div>
-
-        {entry.entry_updates.map((entryUpdate) => (
-          <Card key={entryUpdate.id}>
-            <CardHeader>
-              <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src={
-                      entryUpdate.source_author.author.avatar_url ||
-                      '/images/default-avatar.jpg'
-                    }
-                    alt={entryUpdate.source_author.author.display_name}
-                  />
-                  <AvatarFallback>
-                    {entryUpdate.source_author.author.display_name.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-
-                <div className="flex-1 space-y-3">
-                  <div className="flex flex-wrap items-center gap-2 text-xs">
-                    <span className="font-medium text-foreground">
-                      {entryUpdate.source_author.author.display_name}
-                    </span>
-                    <span className="text-muted-foreground">
-                      {entryUpdate.source_author.author.email}
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">
-                      {format(entryUpdate.source_created_at, 'PPpp')}
-                    </span>
-                    {entryUpdate.source_created_at !== entryUpdate.source_updated_at && (
-                      <>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">
-                          edited {format(entryUpdate.source_updated_at, 'PPpp')}
-                        </span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Comment Labels */}
-                  {Object.entries(entryUpdate.labels).length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {Object.entries(entryUpdate.labels).map(([key, value]) => (
-                        <Badge key={key} variant="secondary">
-                          {key}: {value}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Comment Tags */}
-                  {entryUpdate.tags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Tag className="h-3 w-3 text-muted-foreground" />
-                      {entryUpdate.tags.map((tag, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+    <>
+      <h1 className="mb-5 animate-slide-up text-balance text-xl font-bold text-foreground lg:text-2xl">
+        {entry?.title}
+      </h1>
+      <div className="grid animate-slide-up gap-4 lg:grid-cols-3">
+        {/* Left */}
+        <div className="lg:col-span-2">
+          <Card className="shadow-sm">
+            <CardHeader className="pb-0 pt-3">
+              <CardTitle className="text-lg">Description</CardTitle>
             </CardHeader>
 
-            <CardContent className="p-6 pt-0">
-              <MarkdownRenderer>{entryUpdate.body}</MarkdownRenderer>
+            <CardContent className="overflow-auto p-6 pt-2">
+              <MarkdownRenderer>{entry?.body || ''}</MarkdownRenderer>
             </CardContent>
           </Card>
-        ))}
+
+          <div className="mt-5">
+            <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+              <MessageSquare className="h-4 w-4" />
+              <span className="text-lg">Updates ({entry?.entry_updates.length})</span>
+            </div>
+
+            {entry?.entry_updates.map((entryUpdate) => (
+              <EntryUpdateCard key={entryUpdate.id} entryUpdate={entryUpdate} />
+            ))}
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="lg:col-span-1">
+          <Card className="shadow-sm">
+            <CardHeader className="py-3">
+              <CardTitle className="text-lg">Detail</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 pt-0">
+              <div className="d-list">
+                {/* Author */}
+                <div className="d-item">
+                  <dt className="d-label">Author</dt>
+                  <dd className="d-content">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={entry?.source_author?.author.avatar_url} />
+                        <AvatarFallback>
+                          {entry?.source_author?.author.display_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{entry?.source_author?.author.display_name}</span>
+                    </div>
+                  </dd>
+                </div>
+
+                {/* Assignee */}
+                {entry?.source_assignee && (
+                  <div className="d-item">
+                    <dt className="d-label">Assignee</dt>
+                    <dd className="d-content">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={entry?.source_assignee?.author.avatar_url} />
+                          <AvatarFallback>
+                            {entry?.source_assignee?.author.display_name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{entry?.source_assignee?.author.display_name}</span>
+                      </div>
+                    </dd>
+                  </div>
+                )}
+
+                {/* Tags */}
+                <div className="d-item">
+                  <dt className="d-label">Tags</dt>
+                  <dd className="d-content">
+                    <TagsPreview tags={entry?.tags || []} maxVisible={3} />
+                  </dd>
+                </div>
+
+                {/* Meta data */}
+                <div className="d-item">
+                  <dt className="d-label">Meta Data</dt>
+                  <dd className="d-content">
+                    <div className="flex flex-wrap gap-2">
+                      {entry?.meta_data?.links?.map((link, key) => {
+                        return (
+                          <div key={key} className="flex items-center gap-2">
+                            <div className="w-4">
+                              {link?.icon ? (
+                                <FontAwesomeIcon
+                                  icon={['fab', link.icon as any]}
+                                  size="1x"
+                                />
+                              ) : (
+                                <LinkIcon size={15} />
+                              )}
+                            </div>
+                            <Link
+                              to={link.href}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="max-w-[100px] truncate text-primary hover:underline">
+                              {link?.text}
+                            </Link>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </dd>
+                </div>
+
+                {/* Created At */}
+                <div className="d-item">
+                  <dt className="d-label">Created At</dt>
+                  <dd className="d-content">
+                    {format(entry?.source_created_at || '', 'PPpp')}
+                  </dd>
+                </div>
+
+                {/* Updated At */}
+                <div className="d-item">
+                  <dt className="d-label">Updated At</dt>
+                  <dd className="d-content">
+                    {format(entry?.source_updated_at || '', 'PPpp')}
+                  </dd>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
