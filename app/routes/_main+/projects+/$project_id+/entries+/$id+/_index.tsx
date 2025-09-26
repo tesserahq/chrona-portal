@@ -155,7 +155,7 @@ export default function EntryDetailPage() {
                               to={link.href}
                               target="_blank"
                               rel="noreferrer"
-                              className="max-w-[100px] truncate text-primary hover:underline">
+                              className="text-primary hover:underline">
                               {link?.text}
                             </Link>
                           </div>
