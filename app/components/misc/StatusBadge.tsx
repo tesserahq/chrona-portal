@@ -44,6 +44,12 @@ const getStatusConfig = (status: string): StatusConfig => {
         'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800',
       label: 'Failed',
     },
+    draft: {
+      variant: 'default',
+      className:
+        'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800',
+      label: 'Draft',
+    },
   }
 
   return (
@@ -63,7 +69,7 @@ export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
     <Badge
       variant={config.variant}
       className={cn('border font-medium shadow-none', config.className, className)}>
-      {config.label}
+      <span className="capitalize">{config.label}</span>
     </Badge>
   )
 }

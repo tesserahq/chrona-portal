@@ -1,11 +1,13 @@
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import PreviewJsonDialog from '@/components/misc/Dialog/PreviewJson'
 import { StatusBadge } from '@/components/misc/StatusBadge'
 import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import {
   Tooltip,
   TooltipContent,
@@ -16,11 +18,23 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IImportRequest, IImportRequestItem } from '@/types/import-request'
-import { useLoaderData, useParams } from '@remix-run/react'
+import { cn } from '@/utils/misc'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs } from '@remix-run/node'
+import { useActionData, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
 import { format } from 'date-fns'
-import { ClockAlert, Database, Eye, LaptopMinimalCheck } from 'lucide-react'
+import {
+  ClockAlert,
+  Database,
+  EllipsisVertical,
+  Eye,
+  LaptopMinimalCheck,
+  RefreshCcw,
+  Trash2,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -31,12 +45,16 @@ export function loader() {
 
 export default function ImportRequestDetailPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const { token } = useApp()
   const params = useParams()
+  const navigate = useNavigate()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [importRequest, setImportRequest] = useState<IImportRequest>()
+  const [processingId, setProcessingId] = useState<string>('')
   const previewJsonRef = useRef<React.ElementRef<typeof PreviewJsonDialog>>(null)
+  const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
 
   const fetchImportRequest = async () => {
     try {
@@ -51,6 +69,22 @@ export default function ImportRequestDetailPage() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const onProcessImportRequest = async (id: string) => {
+    setProcessingId(id)
+
+    try {
+      await fetchApi(`${apiUrl}/import-requests/${id}/process`, token!, nodeEnv, {
+        method: 'POST',
+      })
+
+      toast.success('Import request processed successfully')
+    } catch (error) {
+      handleApiError(error)
+    } finally {
+      setProcessingId('')
     }
   }
 
@@ -152,6 +186,17 @@ export default function ImportRequestDetailPage() {
     }
   }, [token, params.id])
 
+  useEffect(() => {
+    if (actionData?.success) {
+      // show success message
+      toast.success(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+      // redirect to import requests list
+      navigate(`/projects/${params.project_id}/import-requests`)
+    }
+  }, [actionData, navigate, params.project_id])
+
   if (isLoading) {
     return <AppPreloader />
   }
@@ -174,11 +219,44 @@ export default function ImportRequestDetailPage() {
         {/* Main Info Card */}
         <Card className="mb-5">
           <CardHeader className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="text-balance text-2xl font-bold text-foreground">
-                Import Request Detail
-              </h2>
-              <StatusBadge status={importRequest.status} />
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <h2 className="text-balance text-2xl font-bold text-foreground">
+                  Import Request Detail
+                </h2>
+                <StatusBadge status={importRequest.status} />
+              </div>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button size="icon" variant="ghost">
+                    <EllipsisVertical />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" side="left" className="w-44 p-2">
+                  <Button
+                    variant="ghost"
+                    className="flex w-full justify-start"
+                    disabled={processingId === importRequest.id}
+                    onClick={() => {
+                      onProcessImportRequest(importRequest.id)
+                    }}>
+                    <RefreshCcw
+                      className={cn(processingId === importRequest.id && 'animate-spin')}
+                    />
+                    <span>Process</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                    onClick={() => {
+                      deleteRef.current?.onOpen()
+                    }}>
+                    <Trash2 />
+                    <span>Delete</span>
+                  </Button>
+                </PopoverContent>
+              </Popover>
             </div>
           </CardHeader>
           <CardContent className="space-y-6 px-6">
@@ -273,7 +351,46 @@ export default function ImportRequestDetailPage() {
         </Card>
       </div>
 
+      <ModalDelete
+        ref={deleteRef}
+        alert="Import Request"
+        title={`Remove from import requests`}
+        data={{
+          project_id: params.project_id,
+          id: importRequest?.id,
+          token: token!,
+        }}
+      />
+
       <PreviewJsonDialog ref={previewJsonRef} title="Raw Payload" />
     </div>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { project_id, token, id } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/import-requests/${id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return { success: true, message: `Import request deleted successfully` }
+    }
+  } catch (error: unknown) {
+    const convertError = JSON.parse((error as Error)?.message)
+
+    return redirectWithToast(`/projects/${project_id}/import-requests`, {
+      type: 'error',
+      title: 'Error',
+      description: `${convertError.status} - ${convertError.error}`,
+    })
+  }
 }

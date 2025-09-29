@@ -1,17 +1,38 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import BackfillDialog from '@/components/misc/Dialog/DigestGeneratorBackfill'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigestGenerator } from '@/types/digest'
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs } from '@remix-run/node'
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useNavigate,
+  useNavigation,
+  useParams,
+} from '@remix-run/react'
 import cronstrue from 'cronstrue'
 import { format } from 'date-fns'
-import { ArrowLeft, CalendarDays } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import {
+  ArrowLeft,
+  CalendarDays,
+  DatabaseBackup,
+  EllipsisVertical,
+  Pencil,
+  Save,
+  Trash2,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -22,12 +43,18 @@ export function loader() {
 
 export default function DigestGeneratorDetailPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const params = useParams()
   const navigate = useNavigate()
+  const navigation = useNavigation()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [config, setConfig] = useState<IDigestGenerator | null>(null)
+  const [configDelete, setConfigDelete] = useState<IDigestGenerator>()
+  const [configBackfill, setConfigBackfill] = useState<IDigestGenerator>()
+  const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+  const backfillRef = useRef<React.ElementRef<typeof BackfillDialog>>(null)
 
   const fetchConfig = async () => {
     setIsLoading(true)
@@ -49,6 +76,26 @@ export default function DigestGeneratorDetailPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id, token])
+
+  useEffect(() => {
+    if (actionData?.status === 'success') {
+      // show success message
+      toast.success(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+      backfillRef?.current?.onClose()
+      // refresh data
+      fetchConfig()
+    }
+
+    if (actionData?.status === 'error') {
+      // show success message
+      toast.error(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+      backfillRef?.current?.onClose()
+    }
+  }, [actionData])
 
   if (isLoading) return <AppPreloader />
 
@@ -77,9 +124,72 @@ export default function DigestGeneratorDetailPage() {
     <div className="coreui-content-center animate-slide-up">
       <Card className="coreui-card-center">
         <CardHeader className="space-y-3">
-          <h1 className="text-balance text-2xl font-bold text-foreground">
-            {config.title}
-          </h1>
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="h-4 w-4 rounded-full"
+                style={{ background: config.ui_format?.color || '#6b7280' }}></div>
+              <h1 className="text-balance text-2xl font-bold text-foreground">
+                {config.title}
+              </h1>
+            </div>
+
+            {/* Hamburger Menu */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="icon" variant="ghost">
+                  <EllipsisVertical />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" side="bottom" className="w-44 p-2">
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start"
+                  onClick={() => {
+                    const url = `/projects/${params.project_id}/digest-generator/${config.id}/edit`
+                    navigate(url)
+                  }}>
+                  <Pencil />
+                  <span>Edit</span>
+                </Button>
+                <Form method="POST">
+                  <input type="hidden" name="form_type" value="draft" />
+                  <input type="hidden" name="id" value={config.id} />
+                  <input type="hidden" name="token" value={token!} />
+                  <input type="hidden" name="project_id" value={params.project_id} />
+                  <Button
+                    variant="ghost"
+                    className="flex w-full justify-start"
+                    disabled={navigation.state === 'submitting'}>
+                    <Save />
+                    <span>
+                      {navigation.state === 'submitting' ? 'Drafting...' : 'Draft'}
+                    </span>
+                  </Button>
+                </Form>
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start"
+                  onClick={() => {
+                    backfillRef.current?.onOpen()
+                    setConfigBackfill(config)
+                  }}>
+                  <DatabaseBackup />
+                  <span>Backfill</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    deleteRef.current?.onOpen()
+                    setConfigDelete(config)
+                  }}>
+                  <Trash2 />
+                  <span>Delete</span>
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -175,6 +285,85 @@ export default function DigestGeneratorDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ModalDelete
+        ref={deleteRef}
+        alert="Digest Generator"
+        title={`Remove "${configDelete?.title}" from digest generators`}
+        data={{
+          project_id: params.project_id,
+          id: configDelete?.id,
+          token: token!,
+        }}
+      />
+
+      <BackfillDialog
+        ref={backfillRef}
+        data={{
+          project_id: params.project_id,
+          id: configBackfill?.id,
+          token: token!,
+          title: configBackfill?.title || '', // just for title not send into API
+        }}
+      />
     </div>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { project_id, token, id, form_type, days, force } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'POST') {
+      if (form_type === 'draft') {
+        const url = `${apiUrl}/digest-generation-configs/${id}/draft`
+
+        await fetchApi(url, token as string, nodeEnv, {
+          method: 'POST',
+        })
+
+        return { status: 'success', message: `Digest generator drafted successfully` }
+      }
+
+      if (form_type === 'backfill') {
+        const url = `${apiUrl}/digest-generation-configs/${id}/backfill`
+        const payload = {
+          days: Number(days),
+          force: force === 'on',
+        }
+
+        await fetchApi(url, token as string, nodeEnv, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        })
+
+        return { status: 'success', message: `Digest generator backfilled successfully` }
+      }
+    }
+
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/digest-generation-configs/${id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return redirectWithToast(`/projects/${project_id}/digest-generator`, {
+        type: 'success',
+        title: 'Error',
+        description: 'Digest generator deleted successfully',
+      })
+    }
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return {
+      status: 'error',
+      message: `${convertError.status} - ${convertError.error}`,
+    }
+  }
 }
