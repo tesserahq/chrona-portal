@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { EntryUpdateCard } from '@/components/misc/EntryUpdateCard'
+import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
+import { StatusBadge } from '@/components/misc/StatusBadge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
@@ -12,6 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import Separator from '@/components/ui/separator'
 import {
   Tooltip,
@@ -24,10 +28,12 @@ import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigest } from '@/types/digest'
 import { IEntry } from '@/types/entry'
-import { useLoaderData, useParams } from '@remix-run/react'
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { ActionFunctionArgs } from '@remix-run/node'
 import { format } from 'date-fns'
-import { CalendarDays, Users } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { CalendarDays, Edit, EllipsisVertical, Trash2, Users } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { redirectWithToast } from '@/utils/toast.server'
 
 export const Tags = ({ tags }: { tags: string[] }) => {
   if (tags.length === 0) return null
@@ -133,11 +139,13 @@ export function loader() {
 export default function DigestDetailPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
   const params = useParams()
+  const navigate = useNavigate()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digest, setDigest] = useState<IDigest | null>(null)
   const [entry, setEntry] = useState<IEntry | null>(null)
+  const deleteRef = useRef<any>(null)
 
   const fetchDigest = async () => {
     setIsLoading(true)
@@ -176,23 +184,57 @@ export default function DigestDetailPage() {
             style={{
               borderLeft: `4px solid ${digest?.digest_generation_config?.ui_format?.color}`,
             }}>
-            <CardHeader className="space-y-3 pb-3">
-              {/* Digest Metadata */}
-              <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <CalendarDays size={12} />
-                  <span className="text-xs">
-                    Created {digest?.created_at && format(digest.created_at, 'PPpp')}
-                  </span>
+            <CardHeader className="space-y-3 pb-3 pt-3">
+              <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <CalendarDays size={12} />
+                    <span className="text-xs">
+                      Created {digest?.created_at && format(digest.created_at, 'PPpp')}
+                    </span>
+                  </div>
+                  <Separator orientation="vertical" />
+                  <div className="flex items-center gap-1">
+                    <CalendarDays size={12} />
+                    <span className="text-xs">
+                      Updated
+                      {digest?.updated_at && format(digest.updated_at, 'PPpp')}
+                    </span>
+                  </div>
+                  {digest?.status === 'draft' && (
+                    <StatusBadge status={digest?.status} className="ml-1" />
+                  )}
                 </div>
-                <Separator orientation="vertical" />
-                <div className="flex items-center gap-1">
-                  <CalendarDays size={12} />
-                  <span className="text-xs">
-                    Updated
-                    {digest?.updated_at && format(digest.updated_at, 'PPpp')}
-                  </span>
-                </div>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="icon" variant="ghost">
+                      <EllipsisVertical />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="left" className="w-44 p-2">
+                    <Button
+                      variant="ghost"
+                      className="flex w-full justify-start"
+                      onClick={() =>
+                        navigate(
+                          `/projects/${params.project_id}/digests/${params.id}/edit`,
+                        )
+                      }>
+                      <Edit />
+                      <span>Edit</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                      onClick={() => {
+                        deleteRef.current?.onOpen()
+                      }}>
+                      <Trash2 />
+                      <span>Delete</span>
+                    </Button>
+                  </PopoverContent>
+                </Popover>
               </div>
             </CardHeader>
 
@@ -357,6 +399,49 @@ export default function DigestDetailPage() {
           ))}
         </DialogContent>
       </Dialog>
+
+      <ModalDelete
+        ref={deleteRef}
+        alert="Digest"
+        title={`Remove "${digest?.title}" from digests`}
+        data={{
+          project_id: params.project_id,
+          id: digest?.id,
+          token: token!,
+        }}
+      />
     </>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { token, id, project_id } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/digests/${id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return redirectWithToast(`/projects/${project_id}/digests`, {
+        type: 'success',
+        title: 'Success',
+        description: 'Digest deleted successfully',
+      })
+    }
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return redirectWithToast(`/projects/${project_id}/digests`, {
+      type: 'error',
+      title: 'Error',
+      description: `${convertError.status} - ${convertError.error}`,
+    })
+  }
 }

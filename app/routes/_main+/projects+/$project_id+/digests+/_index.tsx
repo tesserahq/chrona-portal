@@ -25,7 +25,7 @@ import {
   useSearchParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, Trash2 } from 'lucide-react'
+import { EllipsisVertical, EyeIcon, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -87,6 +87,15 @@ export default function DigestsPage() {
                 }>
                 <EyeIcon />
                 <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() =>
+                  navigate(`/projects/${params.project_id}/digests/${digest.id}/edit`)
+                }>
+                <Pencil />
+                <span>Edit</span>
               </Button>
               <Button
                 variant="ghost"
