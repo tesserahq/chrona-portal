@@ -1,16 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import DeleteConfirmation from '@/components/misc/Dialog/DeleteConfirmation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IAuthor } from '@/types/author'
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
-import { ArrowLeft, Calendar, Mail, Tag, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useActionData, useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import {
+  ArrowLeft,
+  Calendar,
+  Mail,
+  Tag,
+  User,
+  EllipsisVertical,
+  Edit,
+  Trash2,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { ActionFunctionArgs } from '@remix-run/node'
+import { redirectWithToast } from '@/utils/toast.server'
+import { toast } from 'sonner'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -21,12 +35,14 @@ export function loader() {
 
 export default function AuthorDetailPage() {
   const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const actionData = useActionData<typeof action>()
   const params = useParams()
   const navigate = useNavigate()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [author, setAuthor] = useState<IAuthor | null>(null)
+  const deleteRef = useRef<any>(null)
 
   const fetchAuthor = async () => {
     setIsLoading(true)
@@ -48,6 +64,17 @@ export default function AuthorDetailPage() {
       fetchAuthor()
     }
   }, [params.id])
+
+  useEffect(() => {
+    if (actionData?.success) {
+      // show success message
+      toast.success(actionData.message)
+      // close modal
+      deleteRef?.current?.onClose()
+      // navigate back to authors list
+      navigate(`/workspaces/${params.workspace_id}/authors`)
+    }
+  }, [actionData, navigate, params.workspace_id])
 
   if (isLoading) return <AppPreloader />
 
@@ -80,23 +107,57 @@ export default function AuthorDetailPage() {
       <Card className="coreui-card-center">
         <CardHeader>
           {/* Author Header */}
-          <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={author.avatar_url} alt={author.display_name} />
-              <AvatarFallback className="text-2xl font-semibold">
-                {getInitials(author.display_name)}
-              </AvatarFallback>
-            </Avatar>
+          <div className="flex items-start justify-between">
+            {/* Title */}
+            <div className="flex items-center gap-6">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={author.avatar_url} alt={author.display_name} />
+                <AvatarFallback className="text-2xl font-semibold">
+                  {getInitials(author.display_name)}
+                </AvatarFallback>
+              </Avatar>
 
-            <div className="flex-1 space-y-1">
-              <h1 className="text-3xl font-bold text-foreground">
-                {author.display_name}
-              </h1>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{author.email}</span>
+              <div className="flex-1 space-y-1">
+                <h1 className="text-3xl font-bold text-foreground">
+                  {author.display_name}
+                </h1>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="h-4 w-4" />
+                  <span>{author.email}</span>
+                </div>
               </div>
             </div>
+
+            {/* Hamburger Menu */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="icon" variant="ghost">
+                  <EllipsisVertical />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" side="bottom" className="w-44 p-2">
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start"
+                  onClick={() => {
+                    navigate(
+                      `/workspaces/${params.workspace_id}/authors/${author.id}/edit`,
+                    )
+                  }}>
+                  <Edit />
+                  <span>Edit</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    deleteRef.current?.onOpen()
+                  }}>
+                  <Trash2 />
+                  <span>Delete</span>
+                </Button>
+              </PopoverContent>
+            </Popover>
           </div>
         </CardHeader>
 
@@ -158,6 +219,45 @@ export default function AuthorDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <DeleteConfirmation
+        ref={deleteRef}
+        alert="Author"
+        title={`Delete "${author?.display_name}" from author?`}
+        data={{
+          workspace_id: params.workspace_id,
+          author_id: author?.id,
+          token: token,
+        }}
+      />
     </div>
   )
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const apiUrl = process.env.API_URL
+  const nodeEnv = process.env.NODE_ENV
+  const formData = await request.formData()
+
+  const { workspace_id, author_id, token } = Object.fromEntries(formData)
+
+  try {
+    if (request.method === 'DELETE') {
+      const url = `${apiUrl}/authors/${author_id}`
+
+      await fetchApi(url, token as string, nodeEnv, {
+        method: 'DELETE',
+      })
+
+      return { success: true, message: `Author deleted successfully` }
+    }
+  } catch (error: any) {
+    const convertError = JSON.parse(error?.message)
+
+    return redirectWithToast(`/workspaces/${workspace_id}/authors`, {
+      type: 'error',
+      title: 'Error',
+      description: `${convertError.status} - ${convertError.error}`,
+    })
+  }
 }

@@ -295,7 +295,7 @@ export default function WorkspaceAuthors() {
       <DeleteConfirmation
         ref={deleteRef}
         alert="Author"
-        title={`Delete "${authorDelete?.display_name}" author?`}
+        title={`Delete "${authorDelete?.display_name}" from author?`}
         data={{
           workspace_id: params.workspace_id,
           author_id: authorDelete?.id,
