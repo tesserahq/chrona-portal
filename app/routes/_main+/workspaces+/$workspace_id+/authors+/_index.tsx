@@ -242,7 +242,7 @@ export default function WorkspaceAuthors() {
     },
     {
       accessorKey: 'meta_data',
-      header: 'Meta Data',
+      header: 'Metadata',
       cell: ({ row }) => {
         const isValidMetadata: boolean =
           row.original.meta_data !== null &&
@@ -251,7 +251,7 @@ export default function WorkspaceAuthors() {
         return (
           isValidMetadata && (
             <LabelTooltip
-              title="Meta Data"
+              title="Metadata"
               labels={Object.entries(row.original.meta_data)}
             />
           )
