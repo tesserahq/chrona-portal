@@ -59,7 +59,7 @@ export const EntryUpdateCard = ({ entryUpdate, className }: EntryUpdateCardProps
         </div>
       </CardHeader>
 
-      <CardContent className="flex gap-3 overflow-auto px-6 pt-0 text-sm">
+      <CardContent className="flex gap-3 overflow-auto px-6 pt-1 text-sm">
         <div className="h-10 w-10"></div>
         <MarkdownRenderer>{entryUpdate.body}</MarkdownRenderer>
       </CardContent>

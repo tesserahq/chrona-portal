@@ -45,10 +45,7 @@ const EntryInformation: React.ForwardRefRenderFunction<FuncProps> = (_, ref) => 
           {/* Left */}
           <div className="lg:col-span-2">
             <Card className="shadow-sm">
-              <CardHeader className="pb-0 pt-3">
-                <CardTitle className="text-base">Description</CardTitle>
-              </CardHeader>
-              <CardContent className="overflow-auto p-6 pt-2">
+              <CardContent className="overflow-auto p-4">
                 <MarkdownRenderer>{entry?.body || ''}</MarkdownRenderer>
               </CardContent>
             </Card>

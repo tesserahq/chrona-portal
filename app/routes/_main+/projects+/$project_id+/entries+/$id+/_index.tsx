@@ -81,37 +81,34 @@ export default function EntryDetailPage() {
 
   return (
     <>
-      <h1 className="mb-5 animate-slide-up text-balance text-xl font-bold text-foreground lg:text-2xl">
-        {entry?.title}
-      </h1>
+      <div className="mb-5 flex animate-slide-up items-center justify-between gap-5">
+        <h1 className="text-balance text-xl font-bold text-foreground lg:text-2xl">
+          {entry?.title}
+        </h1>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <EllipsisVertical />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" side="left" className="w-44 p-2">
+            <Button
+              variant="ghost"
+              className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => {
+                deleteRef.current?.onOpen()
+              }}>
+              <Trash2 />
+              <span>Delete</span>
+            </Button>
+          </PopoverContent>
+        </Popover>
+      </div>
       <div className="grid animate-slide-up gap-4 lg:grid-cols-3">
         {/* Left */}
         <div className="lg:col-span-2">
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-0 pt-2">
-              <CardTitle className="text-base">Description</CardTitle>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button size="icon" variant="ghost">
-                    <EllipsisVertical />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" side="left" className="w-44 p-2">
-                  <Button
-                    variant="ghost"
-                    className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => {
-                      deleteRef.current?.onOpen()
-                    }}>
-                    <Trash2 />
-                    <span>Delete</span>
-                  </Button>
-                </PopoverContent>
-              </Popover>
-            </CardHeader>
-
-            <CardContent className="overflow-auto p-6 pt-0">
+            <CardContent className="overflow-auto p-6">
               <MarkdownRenderer>{entry?.body || ''}</MarkdownRenderer>
             </CardContent>
           </Card>
