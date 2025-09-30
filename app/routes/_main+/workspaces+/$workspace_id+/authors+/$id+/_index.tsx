@@ -10,20 +10,19 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IAuthor } from '@/types/author'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs } from '@remix-run/node'
 import { useActionData, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import {
   ArrowLeft,
-  Calendar,
+  Database,
+  Edit,
+  EllipsisVertical,
   Mail,
   Tag,
-  User,
-  EllipsisVertical,
-  Edit,
   Trash2,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { ActionFunctionArgs } from '@remix-run/node'
-import { redirectWithToast } from '@/utils/toast.server'
 import { toast } from 'sonner'
 
 export function loader() {
@@ -135,7 +134,7 @@ export default function AuthorDetailPage() {
                   <EllipsisVertical />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" side="bottom" className="w-44 p-2">
+              <PopoverContent align="start" side="left" className="w-44 p-2">
                 <Button
                   variant="ghost"
                   className="flex w-full justify-start"
@@ -179,40 +178,44 @@ export default function AuthorDetailPage() {
             </div>
           )}
 
-          {/* Labels Section */}
-          {author.labels && Object.keys(author.labels).length > 0 && (
+          {/* Meta Data Section */}
+          {/* {author.meta_data && Object.keys(author.meta_data).length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-semibold text-foreground">Labels</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(author.labels).map(([key, value]) => (
-                  <Badge key={key} variant="secondary" className="text-sm">
-                    {key}: {value || '-'}
-                  </Badge>
+              <h3 className="font-semibold text-foreground">Metadata</h3>
+              <div className="d-list space-y-2">
+                {Object.entries(author.meta_data).map(([key, value]) => (
+                  <div key={key} className="d-item">
+                    <dt className="d-label">{key}</dt>
+                    <dd className="d-content">{value}</dd>
+                  </div>
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
-          {/* Meta Data Section */}
-          {author.meta_data && Object.keys(author.meta_data).length > 0 && (
+          {/* Sources Section */}
+          {author.sources && author.sources.length > 0 && (
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <h3 className="font-semibold text-foreground">Meta Data</h3>
-              </div>
-              <div className="space-y-2">
-                {Object.entries(author.meta_data).map(([key, value]) => (
-                  <div key={key} className="flex items-center gap-3">
-                    <span className="min-w-[120px] text-sm font-medium text-foreground">
-                      {key}:
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                    </span>
-                  </div>
+              <h3 className="font-semibold text-foreground">Sources</h3>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {author.sources.map((source) => (
+                  <Card key={source.id} className="shadow-none">
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 rounded-lg bg-muted p-2">
+                          <Database className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="truncate font-medium text-foreground">
+                            {source.name || 'Unnamed Source'}
+                          </h4>
+                          <p className="truncate text-sm text-muted-foreground">
+                            {source.identifier}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             </div>
