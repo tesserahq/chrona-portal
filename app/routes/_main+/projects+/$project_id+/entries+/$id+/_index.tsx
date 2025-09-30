@@ -81,37 +81,34 @@ export default function EntryDetailPage() {
 
   return (
     <>
-      <h1 className="mb-5 animate-slide-up text-balance text-xl font-bold text-foreground lg:text-2xl">
-        {entry?.title}
-      </h1>
+      <div className="mb-5 flex animate-slide-up items-center justify-between gap-5">
+        <h1 className="text-balance text-xl font-bold text-foreground lg:text-2xl">
+          {entry?.title}
+        </h1>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="icon" variant="ghost">
+              <EllipsisVertical />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" side="left" className="w-44 p-2">
+            <Button
+              variant="ghost"
+              className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+              onClick={() => {
+                deleteRef.current?.onOpen()
+              }}>
+              <Trash2 />
+              <span>Delete</span>
+            </Button>
+          </PopoverContent>
+        </Popover>
+      </div>
       <div className="grid animate-slide-up gap-4 lg:grid-cols-3">
         {/* Left */}
         <div className="lg:col-span-2">
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-0 pt-3">
-              <CardTitle className="text-lg">Description</CardTitle>
-
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button size="icon" variant="ghost">
-                    <EllipsisVertical />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="start" side="left" className="w-44 p-2">
-                  <Button
-                    variant="ghost"
-                    className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => {
-                      deleteRef.current?.onOpen()
-                    }}>
-                    <Trash2 />
-                    <span>Delete</span>
-                  </Button>
-                </PopoverContent>
-              </Popover>
-            </CardHeader>
-
-            <CardContent className="overflow-auto p-6 pt-2">
+            <CardContent className="overflow-auto p-6">
               <MarkdownRenderer>{entry?.body || ''}</MarkdownRenderer>
             </CardContent>
           </Card>
@@ -119,7 +116,7 @@ export default function EntryDetailPage() {
           <div className="mt-5">
             <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
               <MessageSquare className="h-4 w-4" />
-              <span className="text-lg">Updates ({entry?.entry_updates.length})</span>
+              <span className="text-base">Updates ({entry?.entry_updates.length})</span>
             </div>
 
             {entry?.entry_updates.map((entryUpdate) => (
@@ -132,7 +129,7 @@ export default function EntryDetailPage() {
         <div className="lg:col-span-1">
           <Card className="shadow-sm">
             <CardHeader className="py-3">
-              <CardTitle className="text-lg">Detail</CardTitle>
+              <CardTitle className="text-base">Detail</CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-0">
               <div className="d-list">

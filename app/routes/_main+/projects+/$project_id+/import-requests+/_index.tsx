@@ -13,8 +13,9 @@ import { fetchApi } from '@/libraries/fetch'
 import { IImportRequest } from '@/types/import-request'
 import { IPaging } from '@/types/pagination'
 import { cn } from '@/utils/misc'
+import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { redirectWithToast } from '@/utils/toast.server'
-import { ActionFunctionArgs } from '@remix-run/node'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import {
   Link,
   useActionData,
@@ -27,15 +28,24 @@ import { EllipsisVertical, EyeIcon, RefreshCcw, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-export function loader() {
+export function loader({ request }: LoaderFunctionArgs) {
+  // This keeps pagination canonicalization consistent across routes.
+  const canonical = ensureCanonicalPagination(request, {
+    defaultSize: 25,
+    defaultPage: 1,
+  })
+
+  // to redirect early if not canonical (ie: ?page=0 or ?size=9999)
+  if (canonical instanceof Response) return canonical
+
   const apiUrl = process.env.API_URL
   const nodeEnv = process.env.NODE_ENV
 
-  return { apiUrl, nodeEnv }
+  return { apiUrl, nodeEnv, size: canonical.size, page: canonical.page }
 }
 
 export default function ImportRequestPage() {
-  const { apiUrl, nodeEnv } = useLoaderData<typeof loader>()
+  const { apiUrl, nodeEnv, size, page } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const { token } = useApp()
   const params = useParams()
@@ -56,6 +66,9 @@ export default function ImportRequestPage() {
         `${apiUrl}/projects/${params.project_id}/import-requests`,
         token!,
         nodeEnv,
+        {
+          pagination: { page, size },
+        },
       )
       setImportRequests(response)
     } catch (error) {
@@ -176,7 +189,7 @@ export default function ImportRequestPage() {
     {
       accessorKey: 'status',
       header: 'Status',
-      size: 130,
+      size: 180,
       cell: ({ row }) => {
         return <StatusBadge status={row.original.status} />
       },
@@ -208,8 +221,10 @@ export default function ImportRequestPage() {
   ]
 
   useEffect(() => {
-    if (token && params.project_id) fetchImportRequests()
-  }, [token, params.project_id])
+    if (token && params.project_id) {
+      fetchImportRequests()
+    }
+  }, [token, params.project_id, size, page])
 
   useEffect(() => {
     if (actionData?.success) {

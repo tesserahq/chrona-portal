@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import EmptyContent from '@/components/misc/EmptyContent'
+import DigestInformation from '@/components/misc/Dialog/DigestInformation'
 import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,7 +10,6 @@ import Separator from '@/components/ui/separator'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { useTheme } from '@/hooks/useTheme'
 import { ROUTE_PATH as THEME_PATH } from '@/routes/resources+/update-theme'
-import '@/styles/customs/gazette.css'
 import { IDigest } from '@/types/digest'
 import { IGazette, IGazetteSection } from '@/types/gazette'
 import { cn } from '@/utils/misc'
@@ -22,7 +22,7 @@ import {
 } from '@remix-run/react'
 import { format } from 'date-fns'
 import { ArrowLeft, Calendar, Monitor, Moon, Palette, Sun } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 export function loader() {
   const apiUrl = process.env.API_URL
@@ -91,6 +91,7 @@ export default function PublicGazetteSharePage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const submit = useSubmit()
   const tags = searchParams.get('tags')
+  const digestRef = useRef<React.ElementRef<typeof DigestInformation>>(null)
 
   const fetchSharedGazette = async (tags: string[] = []) => {
     setIsLoading(true)
@@ -388,7 +389,7 @@ export default function PublicGazetteSharePage() {
           {/* Display digests grouped by date */}
           <div className="col-span-1 lg:col-span-2">
             {Object.keys(digestGrouped).map((date) => (
-              <div key={date} id={date} className="digest-section pt-10">
+              <div key={date} id={date} className="digest-section pt-16">
                 {/* Date Header */}
                 <div className="mb-6 flex items-center justify-between gap-3">
                   <h2 className="font-playfair text-2xl font-bold text-gray-900 dark:text-white">
@@ -411,11 +412,8 @@ export default function PublicGazetteSharePage() {
                   {digestGrouped[date].map((digest) => (
                     <div
                       key={digest.id}
-                      className={`mb-4 inline-block h-fit rounded-lg border p-6 shadow-sm transition-all duration-200 hover:shadow-md ${
-                        isDark
-                          ? 'border-gray-700 bg-gray-800'
-                          : 'border-gray-100 bg-white'
-                      }`}
+                      onClick={() => digestRef.current?.onOpen(digest)}
+                      className="mb-4 inline-block h-fit cursor-pointer rounded-lg border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
                       style={{
                         borderLeft: `4px solid ${digest.digest_generation_config.ui_format?.color}`,
                       }}>
@@ -457,7 +455,7 @@ export default function PublicGazetteSharePage() {
 
           {/* Timeline Sidebar */}
           <div className="col-span-1">
-            <div className="sticky top-0 pt-10">
+            <div className="sticky top-0 pt-16">
               <div className="relative">
                 <h3 className="mb-6 font-playfair text-xl font-bold text-gray-900 dark:text-white">
                   News Timeline
@@ -498,6 +496,8 @@ export default function PublicGazetteSharePage() {
           </div>
         </div>
       )}
+
+      <DigestInformation ref={digestRef} />
     </div>
   )
 }
