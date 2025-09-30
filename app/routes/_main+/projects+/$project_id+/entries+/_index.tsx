@@ -4,7 +4,6 @@ import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import EmptyContent from '@/components/misc/EmptyContent'
-import { LabelTooltip } from '@/components/misc/LabelTooltip'
 import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -156,19 +155,6 @@ export default function ProjectEntriesPage() {
         const tags = row.original.tags || []
 
         return <TagsPreview tags={tags} />
-      },
-    },
-    {
-      accessorKey: 'labels',
-      header: 'Labels',
-      size: 150,
-      cell: ({ row }) => {
-        const isValidLabels: boolean =
-          row.original.labels !== null && Object.keys(row.original.labels).length > 0
-
-        return (
-          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
-        )
       },
     },
     {
