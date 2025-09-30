@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react'
 import { useScopedParams } from '@/utils/scoped_params'
 import { useNavigate, useSearchParams } from '@remix-run/react'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 
 export const Pagination = ({ meta }: { meta: IPagingInfo }) => {
   const { getScopedSearch } = useScopedParams()
@@ -25,21 +25,20 @@ export const Pagination = ({ meta }: { meta: IPagingInfo }) => {
   const { pages, page, total, size } = meta
   const [searchParams, setSearchParams] = useSearchParams()
 
-  // Build a sliding window of 3 pages around the active page
+  // Build a sliding window of pages around the active page
   const getVisiblePages = () => {
-    if (pages <= 3) return Array.from({ length: pages }, (_, i) => i + 1)
+    if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1)
 
-    let start = Math.max(1, page - 1)
-    let end = Math.min(pages, page + 1)
+    const delta = 2 // Number of pages to show on each side of current page
+    let start = Math.max(1, page - delta)
+    let end = Math.min(pages, page + delta)
 
-    // Ensure we always show 3 items if possible
-    while (end - start + 1 < 3) {
-      if (start > 1) {
-        start -= 1
-      } else if (end < pages) {
-        end += 1
-      } else {
-        break
+    // Adjust to ensure we show enough pages
+    if (end - start < 4) {
+      if (start === 1) {
+        end = Math.min(pages, start + 4)
+      } else if (end === pages) {
+        start = Math.max(1, end - 4)
       }
     }
 
@@ -47,8 +46,14 @@ export const Pagination = ({ meta }: { meta: IPagingInfo }) => {
   }
 
   const windowPages = getVisiblePages()
-  const showLeadingEllipsis = windowPages[0] > 1
-  const showTrailingEllipsis = windowPages[windowPages.length - 1] < pages
+  const showLeadingEllipsis = windowPages[0] > 2
+  const showTrailingEllipsis = windowPages[windowPages.length - 1] < pages - 1
+  const showFirstPage = windowPages[0] > 1
+  const showLastPage = windowPages[windowPages.length - 1] < pages
+
+  // Calculate record range
+  const startRecord = (page - 1) * size + 1
+  const endRecord = Math.min(page * size, total)
 
   const [row, setRow] = useState<string>(size.toString())
 
@@ -66,10 +71,10 @@ export const Pagination = ({ meta }: { meta: IPagingInfo }) => {
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-1">
-        <p className="w-24 text-sm text-navy-800 dark:text-navy-200">Row per page</p>
+        <p className="w-28 text-sm text-navy-800 dark:text-navy-200">Items per page:</p>
         <div className="w-20">
           <Select value={row} onValueChange={onChange}>
-            <SelectTrigger>
+            <SelectTrigger className="h-8">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -81,20 +86,45 @@ export const Pagination = ({ meta }: { meta: IPagingInfo }) => {
           </Select>
         </div>
       </div>
+
       <PaginationComponent className="justify-end">
         <PaginationContent>
-          {page > 1 && (
+          <div className="mr-2 text-sm text-navy-800 dark:text-navy-200">
+            {startRecord}-{endRecord} of {total.toLocaleString()}
+          </div>
+          {/* First page button */}
+          {showFirstPage && (
             <PaginationItem>
-              <Button variant="outline" size="icon" onClick={() => onNavigate(page - 1)}>
-                <ChevronLeft />
+              <Button variant="outline" size="icon" onClick={() => onNavigate(1)}>
+                <ChevronsLeft className="h-4 w-4" />
               </Button>
             </PaginationItem>
           )}
+          {/* Previous page button */}
+          {page > 1 && (
+            <PaginationItem>
+              <Button variant="outline" size="icon" onClick={() => onNavigate(page - 1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </PaginationItem>
+          )}
+          {/* First page number */}
+          {showFirstPage && (
+            <PaginationItem>
+              <Button
+                variant={1 === page ? 'default' : 'outline'}
+                onClick={() => onNavigate(1)}>
+                1
+              </Button>
+            </PaginationItem>
+          )}
+          {/* Leading ellipsis */}
           {showLeadingEllipsis && (
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
           )}
+          {/* Window pages */}
           {windowPages.map((val) => (
             <PaginationItem key={val}>
               <Button
@@ -108,15 +138,35 @@ export const Pagination = ({ meta }: { meta: IPagingInfo }) => {
               </Button>
             </PaginationItem>
           ))}
+          {/* Trailing ellipsis */}
           {showTrailingEllipsis && (
             <PaginationItem>
               <PaginationEllipsis />
             </PaginationItem>
           )}
-          {page !== pages && (
+          {/* Last page number */}
+          {showLastPage && (
             <PaginationItem>
-              <Button size="icon" variant="outline" onClick={() => onNavigate(page + 1)}>
+              <Button
+                variant={pages === page ? 'default' : 'outline'}
+                onClick={() => onNavigate(pages)}>
+                {pages}
+              </Button>
+            </PaginationItem>
+          )}
+          {/* Next page button */}
+          {page < pages && (
+            <PaginationItem>
+              <Button variant="outline" size="icon" onClick={() => onNavigate(page + 1)}>
                 <ChevronRight className="h-4 w-4" />
+              </Button>
+            </PaginationItem>
+          )}
+          {/* Last page button */}
+          {showLastPage && (
+            <PaginationItem>
+              <Button variant="outline" size="icon" onClick={() => onNavigate(pages)}>
+                <ChevronsRight className="h-4 w-4" />
               </Button>
             </PaginationItem>
           )}
