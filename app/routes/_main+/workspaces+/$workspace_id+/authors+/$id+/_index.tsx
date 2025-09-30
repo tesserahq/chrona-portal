@@ -197,22 +197,15 @@ export default function AuthorDetailPage() {
           {author.sources && author.sources.length > 0 && (
             <div className="space-y-3">
               <h3 className="font-semibold text-foreground">Sources</h3>
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-wrap items-center gap-2">
                 {author.sources.map((source) => (
                   <Card key={source.id} className="shadow-none">
                     <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 rounded-lg bg-muted p-2">
-                          <Database className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="truncate font-medium text-foreground">
-                            {source.name || 'Unnamed Source'}
-                          </h4>
-                          <p className="truncate text-sm text-muted-foreground">
-                            {source.identifier}
-                          </p>
-                        </div>
+                      <div className="flex items-center gap-3">
+                        <Database className="h-5 w-5" />
+                        <h4 className="truncate font-medium text-foreground">
+                          {source.name || 'Unnamed Source'}
+                        </h4>
                       </div>
                     </CardContent>
                   </Card>

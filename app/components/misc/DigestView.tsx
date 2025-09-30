@@ -199,44 +199,73 @@ export const DigestView = ({
                     </div>
 
                     <div className="flex -space-x-4 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:ring-background *:data-[slot=avatar]:grayscale">
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Avatar className="relative z-10 transition-all duration-200 hover:z-50 hover:scale-110 hover:ring-4 hover:ring-primary/20 hover:grayscale-0">
-                              <AvatarImage
-                                src={entry?.source_author?.author.avatar_url}
-                              />
-                              <AvatarFallback>
-                                {entry?.source_author?.author.display_name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                          </TooltipTrigger>
-                          <TooltipContent align="center">
-                            <span className="text-xs">
-                              Author: {entry?.source_author?.author.display_name}
-                            </span>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                      <TooltipProvider delayDuration={100}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Avatar className="relative z-20 transition-all duration-200 hover:z-50 hover:scale-110 hover:ring-4 hover:ring-primary/20 hover:grayscale-0">
-                              <AvatarImage
-                                src={entry?.source_assignee?.author.avatar_url}
-                              />
-                              <AvatarFallback>
-                                {entry?.source_assignee?.author.display_name.charAt(0)}
-                              </AvatarFallback>
-                            </Avatar>
-                          </TooltipTrigger>
-                          <TooltipContent align="center">
-                            <span className="text-xs">
-                              Assignee: {entry?.source_assignee?.author.display_name}
-                            </span>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      {entry?.source_author?.author.id ===
+                      entry?.source_assignee?.author?.id ? (
+                        // Show single avatar when author and assignee are the same
+                        <TooltipProvider delayDuration={100}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Avatar className="relative z-10 transition-all duration-200 hover:z-50 hover:scale-110 hover:ring-4 hover:ring-primary/20 hover:grayscale-0">
+                                <AvatarImage
+                                  src={entry?.source_author?.author.avatar_url}
+                                />
+                                <AvatarFallback>
+                                  {entry?.source_author?.author.display_name.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </TooltipTrigger>
+                            <TooltipContent align="center">
+                              <span className="text-xs">
+                                {entry?.source_author?.author.display_name}
+                              </span>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      ) : (
+                        // Show both avatars when author and assignee are different
+                        <>
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Avatar className="relative z-10 transition-all duration-200 hover:z-50 hover:scale-110 hover:ring-4 hover:ring-primary/20 hover:grayscale-0">
+                                  <AvatarImage
+                                    src={entry?.source_author?.author.avatar_url}
+                                  />
+                                  <AvatarFallback>
+                                    {entry?.source_author?.author.display_name.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent align="center">
+                                <span className="text-xs">
+                                  Author: {entry?.source_author?.author.display_name}
+                                </span>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Avatar className="relative z-20 transition-all duration-200 hover:z-50 hover:scale-110 hover:ring-4 hover:ring-primary/20 hover:grayscale-0">
+                                  <AvatarImage
+                                    src={entry?.source_assignee?.author.avatar_url}
+                                  />
+                                  <AvatarFallback>
+                                    {entry?.source_assignee?.author.display_name.charAt(
+                                      0,
+                                    )}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent align="center">
+                                <span className="text-xs">
+                                  Assignee: {entry?.source_assignee?.author.display_name}
+                                </span>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
