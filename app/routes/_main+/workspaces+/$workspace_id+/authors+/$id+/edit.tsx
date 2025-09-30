@@ -195,10 +195,10 @@ export default function AuthorEdit() {
 
         {/* Meta Data */}
         <div className="mt-3">
-          <FormField label="Meta Data" name="meta_data" error={errorFields?.meta_data}>
+          <FormField label="Metadata" name="meta_data" error={errorFields?.meta_data}>
             <JSONEditor
               currentData={metaData}
-              title="Meta Data"
+              title="Metadata"
               onChange={(val) => setMetaData(val)}
             />
           </FormField>

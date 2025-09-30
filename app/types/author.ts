@@ -8,4 +8,11 @@ export interface IAuthor {
   labels: Record<string, any>
   meta_data: Record<string, any>
   user_id: string
+  sources: [
+    {
+      id: string
+      identifier: string
+      name: string
+    },
+  ]
 }
