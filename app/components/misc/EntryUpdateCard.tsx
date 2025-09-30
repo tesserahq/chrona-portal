@@ -1,10 +1,10 @@
 import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { EntryUpdates } from '@/types/entry'
 import { cn } from '@/utils/misc'
 import { format } from 'date-fns'
+import { TagsPreview } from './TagsPreview'
 
 interface EntryUpdateCardProps {
   entryUpdate: EntryUpdates
@@ -14,7 +14,7 @@ interface EntryUpdateCardProps {
 export const EntryUpdateCard = ({ entryUpdate, className }: EntryUpdateCardProps) => {
   return (
     <Card className={cn('mb-3 shadow-sm', className)}>
-      <CardHeader className="py-3">
+      <CardHeader className="pb-3 pt-4">
         <div className="flex items-start gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage
@@ -52,26 +52,9 @@ export const EntryUpdateCard = ({ entryUpdate, className }: EntryUpdateCardProps
                 </>
               )}
               {entryUpdate.tags.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1">
-                  {entryUpdate.tags.map((tag, index) => (
-                    <Badge key={index} variant="secondary">
-                      <span className="font-normal">{tag}</span>
-                    </Badge>
-                  ))}
-                </div>
+                <TagsPreview tags={entryUpdate.tags} showAll />
               )}
             </div>
-
-            {/* Labels */}
-            {/* {Object.entries(entryUpdate.labels).length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {Object.entries(entryUpdate.labels).map(([key, value]) => (
-                  <Badge key={key} variant="secondary">
-                    {key}: {value}
-                  </Badge>
-                ))}
-              </div>
-            )} */}
           </div>
         </div>
       </CardHeader>

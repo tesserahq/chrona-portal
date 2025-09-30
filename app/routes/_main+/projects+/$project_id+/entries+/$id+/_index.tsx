@@ -88,8 +88,8 @@ export default function EntryDetailPage() {
         {/* Left */}
         <div className="lg:col-span-2">
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-0 pt-3">
-              <CardTitle className="text-lg">Description</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-0 pt-2">
+              <CardTitle className="text-base">Description</CardTitle>
 
               <Popover>
                 <PopoverTrigger asChild>
@@ -111,7 +111,7 @@ export default function EntryDetailPage() {
               </Popover>
             </CardHeader>
 
-            <CardContent className="overflow-auto p-6 pt-2">
+            <CardContent className="overflow-auto p-6 pt-0">
               <MarkdownRenderer>{entry?.body || ''}</MarkdownRenderer>
             </CardContent>
           </Card>
@@ -119,7 +119,7 @@ export default function EntryDetailPage() {
           <div className="mt-5">
             <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
               <MessageSquare className="h-4 w-4" />
-              <span className="text-lg">Updates ({entry?.entry_updates.length})</span>
+              <span className="text-base">Updates ({entry?.entry_updates.length})</span>
             </div>
 
             {entry?.entry_updates.map((entryUpdate) => (
@@ -132,7 +132,7 @@ export default function EntryDetailPage() {
         <div className="lg:col-span-1">
           <Card className="shadow-sm">
             <CardHeader className="py-3">
-              <CardTitle className="text-lg">Detail</CardTitle>
+              <CardTitle className="text-base">Detail</CardTitle>
             </CardHeader>
             <CardContent className="p-6 pt-0">
               <div className="d-list">

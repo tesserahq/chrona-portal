@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
-import { EntryUpdateCard } from '@/components/misc/EntryUpdateCard'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import EntryInformation from '@/components/misc/Dialog/EntryInformation'
 import { MarkdownRenderer } from '@/components/misc/Markdown/MarkdownRender'
 import { StatusBadge } from '@/components/misc/StatusBadge'
+import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -14,7 +14,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import Separator from '@/components/ui/separator'
 import {
@@ -27,27 +26,12 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigest } from '@/types/digest'
-import { IEntry } from '@/types/entry'
-import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
+import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
+import { useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
 import { CalendarDays, Edit, EllipsisVertical, Trash2, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { redirectWithToast } from '@/utils/toast.server'
-
-export const Tags = ({ tags }: { tags: string[] }) => {
-  if (tags.length === 0) return null
-
-  return (
-    <div className="flex flex-wrap items-center gap-1">
-      {tags.map((tag, index) => (
-        <Badge key={index} variant="secondary">
-          <span className="font-normal">{tag}</span>
-        </Badge>
-      ))}
-    </div>
-  )
-}
 
 export const DigestParticipants = ({ digest }: { digest: IDigest | null }) => {
   if (!digest?.entries) return null
@@ -144,7 +128,7 @@ export default function DigestDetailPage() {
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digest, setDigest] = useState<IDigest | null>(null)
-  const [entry, setEntry] = useState<IEntry | null>(null)
+  const entryRef = useRef<React.ElementRef<typeof EntryInformation>>(null)
   const deleteRef = useRef<any>(null)
 
   const fetchDigest = async () => {
@@ -197,8 +181,7 @@ export default function DigestDetailPage() {
                   <div className="flex items-center gap-1">
                     <CalendarDays size={12} />
                     <span className="text-xs">
-                      Updated
-                      {digest?.updated_at && format(digest.updated_at, 'PPpp')}
+                      Updated {digest?.updated_at && format(digest.updated_at, 'PPpp')}
                     </span>
                   </div>
                   {digest?.status === 'draft' && (
@@ -243,7 +226,7 @@ export default function DigestDetailPage() {
             </CardContent>
 
             <CardFooter className="mt-2 flex justify-end gap-1">
-              <Tags tags={digest?.tags || []} />
+              <TagsPreview tags={digest?.tags || []} showAll />
             </CardFooter>
           </Card>
 
@@ -261,11 +244,11 @@ export default function DigestDetailPage() {
               <div
                 key={entry.id}
                 className="mb-3 cursor-pointer"
-                onClick={() => setEntry(entry)}>
+                onClick={() => entryRef.current?.onOpen(entry)}>
                 <Card className="shadow-sm">
                   <CardHeader className="py-3">
                     <div className="flex items-start justify-between gap-4">
-                      <div className="">
+                      <div className="space-y-1">
                         <CardTitle className="text-base">{entry.title}</CardTitle>
 
                         <div className="flex items-center gap-1">
@@ -275,7 +258,7 @@ export default function DigestDetailPage() {
                           </span>
 
                           <div className="ml-2">
-                            <Tags tags={digest?.tags || []} />
+                            <TagsPreview tags={digest?.tags || []} showAll />
                           </div>
                         </div>
                       </div>
@@ -311,95 +294,6 @@ export default function DigestDetailPage() {
         </div>
       </div>
 
-      <Dialog open={entry !== null} onOpenChange={() => setEntry(null)}>
-        <DialogContent className="max-h-[90%] w-full max-w-[95%] overflow-auto bg-card">
-          <DialogHeader className="mb-3 space-y-4">
-            <div>
-              <DialogTitle className="mb-1 text-xl">{entry?.title}</DialogTitle>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Created {format(entry?.created_at || new Date(), 'PPpp')}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Updated {format(entry?.updated_at || new Date(), 'PPpp')}
-                </span>
-              </div>
-            </div>
-
-            <Tags tags={entry?.tags || []} />
-
-            <div className="grid gap-2 lg:grid-cols-3">
-              {/* Show author if it's not the same as the assignee */}
-              {entry?.source_author?.author?.id !==
-                entry?.source_assignee?.author?.id && (
-                <div>
-                  <p className="mb-2 text-xs font-semibold">Author</p>
-                  <div className="flex items-center gap-2">
-                    <Avatar>
-                      <AvatarImage src={entry?.source_author?.author.avatar_url} />
-                      <AvatarFallback>
-                        {entry?.source_author?.author.display_name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">
-                        {entry?.source_author?.author.display_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {entry?.source_author?.author.email}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Assignee */}
-              <div>
-                <p className="mb-2 text-xs font-semibold">Assignee</p>
-                <div className="flex items-center gap-2">
-                  <Avatar>
-                    <AvatarImage src={entry?.source_assignee?.author.avatar_url} />
-                    <AvatarFallback>
-                      {entry?.source_assignee?.author.display_name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">
-                      {entry?.source_assignee?.author.display_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {entry?.source_assignee?.author.email}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Source */}
-              <div>
-                <p className="mb-1 text-xs font-semibold">Source</p>
-                <p>{entry?.source.name}</p>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="max-w-[95%] overflow-auto">
-            <MarkdownRenderer>{entry?.body || ''}</MarkdownRenderer>
-          </div>
-
-          <h3 className="mt-4 flex items-center gap-2 text-base font-semibold text-foreground">
-            Entry Updates
-          </h3>
-
-          {entry?.entry_updates.map((entryUpdate) => (
-            <EntryUpdateCard
-              key={entryUpdate.id}
-              entryUpdate={entryUpdate}
-              className="mb-0"
-            />
-          ))}
-        </DialogContent>
-      </Dialog>
-
       <ModalDelete
         ref={deleteRef}
         alert="Digest"
@@ -410,6 +304,8 @@ export default function DigestDetailPage() {
           token: token!,
         }}
       />
+
+      <EntryInformation ref={entryRef} />
     </>
   )
 }
