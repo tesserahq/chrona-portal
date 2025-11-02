@@ -266,8 +266,8 @@ export default function ProjectGazettesPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Gazette"
-        title={`Remove "${gazetteDelete?.name}" from gazettes`}
+        title="Remove Gazette"
+        description={`This will remove "${gazetteDelete?.name}" from your gazettes. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: gazetteDelete?.id,

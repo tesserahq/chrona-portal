@@ -235,8 +235,9 @@ export default function ProjectSetting() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Project"
-        title={`Delete "${project?.name}" project?`}
+        showInputValidation
+        title="Remove Project"
+        description={`This will remove "${project?.name}" from your projects. This action cannot be undone.`}
         data={{
           workspace_id: getWorkspaceID(),
           project_id: params.project_id,

@@ -256,8 +256,8 @@ export default function ProjectEntriesPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Entry"
-        title={`Remove "${entryDelete?.title}" from entries`}
+        title="Remove Entry"
+        description={`This will remove "${entryDelete?.title}" from your entries. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: entryDelete?.id,

@@ -218,8 +218,8 @@ export default function AuthorDetailPage() {
 
       <DeleteConfirmation
         ref={deleteRef}
-        alert="Author"
-        title={`Delete "${author?.display_name}" from author?`}
+        title="Remove Author"
+        description={`This will remove "${author?.display_name}" from your authors. This action cannot be undone.`}
         data={{
           workspace_id: params.workspace_id,
           author_id: author?.id,

@@ -225,8 +225,8 @@ export default function SourcesPage() {
 
       <DeleteConfirmation
         ref={deleteRef}
-        alert="Source"
-        title={`Delete "${sourceDelete?.name}" source?`}
+        title="Remove Source"
+        description={`This will remove "${sourceDelete?.name}" from your sources. This action cannot be undone.`}
         data={{
           workspace_id: params.workspace_id,
           source_id: sourceDelete?.id,

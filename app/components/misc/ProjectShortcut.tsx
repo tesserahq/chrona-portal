@@ -35,11 +35,11 @@ export default function ProjectShortcut({ apiUrl, nodeEnv }: Props) {
   const { token, isLoading: loadingAuth0 } = useApp()
   const handleApiError = useHandleApiError()
 
+  // get current workspaceId from localstorage
+  const workspaceId = getWorkspaceID()
+
   const fetchProjects = async () => {
     try {
-      // get current workspaceId from localstorage
-      const workspaceId = getWorkspaceID()
-
       const url = `${apiUrl}/workspaces/${workspaceId}/projects`
 
       const response = await fetchApi(url, token!, nodeEnv)
@@ -122,7 +122,7 @@ export default function ProjectShortcut({ apiUrl, nodeEnv }: Props) {
                   <CommandItem
                     className="cursor-pointer hover:bg-slate-300/20 dark:hover:bg-navy-300/20"
                     onSelect={() => {
-                      navigate(`/workspaces/${params.workspace_id}/projects/new`)
+                      navigate(`/workspaces/${workspaceId}/projects/new`)
                       setOpen(false)
                     }}>
                     <div className="flex items-center gap-2">

@@ -217,7 +217,7 @@ export default function DigestsPage() {
   }, [actionData])
 
   if (isLoading) {
-    return <AppPreloader className="lg:h-[600px]" />
+    return <AppPreloader />
   }
 
   return (
@@ -238,8 +238,8 @@ export default function DigestsPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Digest"
-        title={`Remove "${digestDelete?.title}" from digests`}
+        title="Remove Digest"
+        description={`This will remove "${digestDelete?.title}" from your digests. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: digestDelete?.id,

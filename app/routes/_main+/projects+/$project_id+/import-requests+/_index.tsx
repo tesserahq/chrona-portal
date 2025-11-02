@@ -264,8 +264,8 @@ export default function ImportRequestPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Import Request"
-        title={`Remove from import requests`}
+        title="Remove Import Request"
+        description={`This will remove "${importRequestDelete?.source.name}" from your import requests. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: importRequestDelete?.id,

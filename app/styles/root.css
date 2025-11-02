@@ -364,3 +364,8 @@ nav.header .header-container {
   /* For older Edge and IE */
   -ms-overflow-style: none;
 }
+
+.rdp-selected .rdp-day_button {
+  border: none !important;
+  font-size: 14px;
+}
