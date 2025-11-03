@@ -348,8 +348,8 @@ export default function TeamWorkspaces() {
 
       <ModalDelete
         ref={deleteInvitationRef}
-        alert="Invitation"
-        title={`Remove "${invitationDelete?.email}" from invitation?`}
+        title="Remove Invitation"
+        description={`This will remove "${invitationDelete?.email}" from your invitations. This action cannot be undone.`}
         data={{
           workspace_id: params.workspace_id,
           invitation_id: invitationDelete?.id,
@@ -361,8 +361,8 @@ export default function TeamWorkspaces() {
 
       <ModalDelete
         ref={deleteMemberRef}
-        alert="Membership"
-        title={`Remove "${memberDelete?.user.first_name} ${memberDelete?.user.last_name}" from membership?`}
+        title="Remove Membership"
+        description={`This will remove "${memberDelete?.user.first_name} ${memberDelete?.user.last_name}" from your memberships. This action cannot be undone.`}
         data={{
           workspace_id: params.workspace_id,
           membership_id: memberDelete?.id,

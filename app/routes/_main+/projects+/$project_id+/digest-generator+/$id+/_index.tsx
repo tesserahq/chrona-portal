@@ -2,6 +2,7 @@
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import BackfillDialog from '@/components/misc/Dialog/DigestGeneratorBackfill'
+import DigestGeneratorDraft from '@/components/misc/Dialog/DigestGeneratorDraft'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -10,14 +11,14 @@ import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigestGenerator } from '@/types/digest'
+import { handleFetcherData } from '@/utils/fetcher.data'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs } from '@remix-run/node'
 import {
-  Form,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigate,
-  useNavigation,
   useParams,
 } from '@remix-run/react'
 import cronstrue from 'cronstrue'
@@ -46,8 +47,8 @@ export default function DigestGeneratorDetailPage() {
   const actionData = useActionData<typeof action>()
   const params = useParams()
   const navigate = useNavigate()
-  const navigation = useNavigation()
   const { token } = useApp()
+  const fetcher = useFetcher()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [config, setConfig] = useState<IDigestGenerator | null>(null)
@@ -55,6 +56,7 @@ export default function DigestGeneratorDetailPage() {
   const [configBackfill, setConfigBackfill] = useState<IDigestGenerator>()
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
   const backfillRef = useRef<React.ElementRef<typeof BackfillDialog>>(null)
+  const draftRef = useRef<React.ElementRef<typeof DigestGeneratorDraft>>(null)
 
   const fetchConfig = async () => {
     setIsLoading(true)
@@ -96,6 +98,16 @@ export default function DigestGeneratorDetailPage() {
       backfillRef?.current?.onClose()
     }
   }, [actionData])
+
+  useEffect(() => {
+    if (fetcher.data) {
+      handleFetcherData(fetcher.data, (response) => {
+        if (response.form_type === 'draft') {
+          draftRef.current?.onClose()
+        }
+      })
+    }
+  }, [fetcher.data])
 
   if (isLoading) return <AppPreloader />
 
@@ -152,21 +164,13 @@ export default function DigestGeneratorDetailPage() {
                   <Pencil />
                   <span>Edit</span>
                 </Button>
-                <Form method="POST">
-                  <input type="hidden" name="form_type" value="draft" />
-                  <input type="hidden" name="id" value={config.id} />
-                  <input type="hidden" name="token" value={token!} />
-                  <input type="hidden" name="project_id" value={params.project_id} />
-                  <Button
-                    variant="ghost"
-                    className="flex w-full justify-start"
-                    disabled={navigation.state === 'submitting'}>
-                    <Save />
-                    <span>
-                      {navigation.state === 'submitting' ? 'Drafting...' : 'Draft'}
-                    </span>
-                  </Button>
-                </Form>
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start"
+                  onClick={() => draftRef.current?.onOpen()}>
+                  <Save />
+                  Draft
+                </Button>
                 <Button
                   variant="ghost"
                   className="flex w-full justify-start"
@@ -288,8 +292,8 @@ export default function DigestGeneratorDetailPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Digest Generator"
-        title={`Remove "${configDelete?.title}" from digest generators`}
+        title="Digest Generator"
+        description={`This will remove "${configDelete?.title}" from your waiting lists. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: configDelete?.id,
@@ -306,6 +310,12 @@ export default function DigestGeneratorDetailPage() {
           title: configBackfill?.title || '', // just for title not send into API
         }}
       />
+
+      <DigestGeneratorDraft
+        ref={draftRef}
+        digestGenerator={config as IDigestGenerator}
+        fetcher={fetcher}
+      />
     </div>
   )
 }
@@ -315,18 +325,66 @@ export async function action({ request }: ActionFunctionArgs) {
   const nodeEnv = process.env.NODE_ENV
   const formData = await request.formData()
 
-  const { project_id, token, id, form_type, days, force } = Object.fromEntries(formData)
+  const { project_id, token, id, form_type, days, force, from_last_digest, from, to } =
+    Object.fromEntries(formData)
 
   try {
     if (request.method === 'POST') {
       if (form_type === 'draft') {
         const url = `${apiUrl}/digest-generation-configs/${id}/draft`
 
+        const dateFilter = () => {
+          const formatDateToUTC = (dateStr: string, isEndOfDay: boolean) => {
+            // Parse the date string - handles both ISO strings and Date.toString() format
+            const date = new Date(dateStr)
+
+            // Extract the calendar date from the Date object
+            // Use getFullYear/getMonth/getDate to get the local calendar date
+            // which represents what the user selected, then format as UTC
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+
+            if (isEndOfDay) {
+              return `${year}-${month}-${day}T23:59:59Z`
+            }
+            return `${year}-${month}-${day}T00:00:00Z`
+          }
+
+          return {
+            from: from ? formatDateToUTC(from as string, false) : undefined,
+            to: to ? formatDateToUTC(to as string, true) : undefined,
+          }
+        }
+
+        const settings = {
+          settings:
+            from_last_digest === 'true'
+              ? {
+                  from_last_digest: true,
+                }
+              : {
+                  from_last_digest: false,
+                  date_filter: dateFilter(),
+                },
+        }
+
         await fetchApi(url, token as string, nodeEnv, {
           method: 'POST',
+          body: JSON.stringify(settings),
         })
 
-        return { status: 'success', message: `Digest generator drafted successfully` }
+        return Response.json(
+          {
+            toast: {
+              type: 'success',
+              title: 'Success',
+              description: 'Successfully drafted digest generator',
+            },
+            response: { form_type },
+          },
+          { status: 200 },
+        )
       }
 
       if (form_type === 'backfill') {

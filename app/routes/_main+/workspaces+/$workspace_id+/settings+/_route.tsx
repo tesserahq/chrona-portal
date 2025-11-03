@@ -294,8 +294,9 @@ export default function WorkspaceSetting() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Workspace"
-        title={`Delete "${workspace?.name}" workspace?`}
+        showInputValidation
+        title="Remove Workspace"
+        description={`This will remove "${workspace?.name}" from your workspaces. This action cannot be undone.`}
         data={{
           workspace_id: params.workspace_id,
           token: token,

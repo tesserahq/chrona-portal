@@ -23,10 +23,11 @@ import { IPaging } from '@/types/pagination'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
+import DigestGeneratorDraft from '@/components/misc/Dialog/DigestGeneratorDraft'
 import {
-  Form,
   Link,
   useActionData,
+  useFetcher,
   useLoaderData,
   useNavigate,
   useParams,
@@ -43,6 +44,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import cronstrue from 'cronstrue'
+import { handleFetcherData } from '@/utils/fetcher.data'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -67,12 +69,15 @@ export default function DigestGeneratorsPage() {
   const handleApiError = useHandleApiError()
   const params = useParams()
   const navigate = useNavigate()
+  const fetcher = useFetcher()
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digestConfigs, setDigestConfigs] = useState<IPaging<IDigestGenerator>>()
   const [configDelete, setConfigDelete] = useState<IDigestGenerator>()
   const [configBackfill, setConfigBackfill] = useState<IDigestGenerator>()
+  const [configDraft, setConfigDraft] = useState<IDigestGenerator | null>(null)
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
   const backfillRef = useRef<React.ElementRef<typeof BackfillDialog>>(null)
+  const draftRef = useRef<React.ElementRef<typeof DigestGeneratorDraft>>(null)
 
   const fetchDigestConfigs = async () => {
     setIsLoading(true)
@@ -109,6 +114,17 @@ export default function DigestGeneratorsPage() {
     }
   }, [actionData])
 
+  useEffect(() => {
+    if (fetcher.data) {
+      handleFetcherData(fetcher.data, (response) => {
+        if (response.form_type === 'draft') {
+          draftRef.current?.onClose()
+          setConfigDraft(null)
+        }
+      })
+    }
+  }, [fetcher.data])
+
   const columns: ColumnDef<IDigestGenerator>[] = [
     {
       accessorKey: 'id',
@@ -144,16 +160,16 @@ export default function DigestGeneratorsPage() {
                 <Pencil />
                 <span>Edit</span>
               </Button>
-              <Form method="POST">
-                <input type="hidden" name="form_type" value="draft" />
-                <input type="hidden" name="id" value={entry.id} />
-                <input type="hidden" name="token" value={token!} />
-                <input type="hidden" name="project_id" value={params.project_id} />
-                <Button variant="ghost" className="flex w-full justify-start">
-                  <Save />
-                  <span>Draft</span>
-                </Button>
-              </Form>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  setConfigDraft(entry)
+                  draftRef.current?.onOpen()
+                }}>
+                <Save />
+                <span>Draft</span>
+              </Button>
               <Button
                 variant="ghost"
                 className="flex w-full justify-start"
@@ -303,8 +319,8 @@ export default function DigestGeneratorsPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Digest Generator"
-        title={`Remove "${configDelete?.title}" from digest generators`}
+        title="Digest Generator"
+        description={`This will remove "${configDelete?.title}" from your waiting lists. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: configDelete?.id,
@@ -321,6 +337,12 @@ export default function DigestGeneratorsPage() {
           title: configBackfill?.title || '', // just for title not send into API
         }}
       />
+
+      <DigestGeneratorDraft
+        ref={draftRef}
+        digestGenerator={configDraft as IDigestGenerator}
+        fetcher={fetcher}
+      />
     </div>
   )
 }
@@ -330,18 +352,65 @@ export async function action({ request }: ActionFunctionArgs) {
   const nodeEnv = process.env.NODE_ENV
   const formData = await request.formData()
 
-  const { project_id, token, id, form_type, days, force } = Object.fromEntries(formData)
+  const { project_id, token, id, form_type, days, force, from_last_digest, from, to } =
+    Object.fromEntries(formData)
 
   try {
     if (request.method === 'POST') {
       if (form_type === 'draft') {
         const url = `${apiUrl}/digest-generation-configs/${id}/draft`
+        const dateFilter = () => {
+          const formatDateToUTC = (dateStr: string, isEndOfDay: boolean) => {
+            // Parse the date string - handles both ISO strings and Date.toString() format
+            const date = new Date(dateStr)
+
+            // Extract the calendar date from the Date object
+            // Use getFullYear/getMonth/getDate to get the local calendar date
+            // which represents what the user selected, then format as UTC
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, '0')
+            const day = String(date.getDate()).padStart(2, '0')
+
+            if (isEndOfDay) {
+              return `${year}-${month}-${day}T23:59:59Z`
+            }
+            return `${year}-${month}-${day}T00:00:00Z`
+          }
+
+          return {
+            from: from ? formatDateToUTC(from as string, false) : undefined,
+            to: to ? formatDateToUTC(to as string, true) : undefined,
+          }
+        }
+
+        const settings = {
+          settings:
+            from_last_digest === 'true'
+              ? {
+                  from_last_digest: true,
+                }
+              : {
+                  from_last_digest: false,
+                  date_filter: dateFilter(),
+                },
+        }
 
         await fetchApi(url, token as string, nodeEnv, {
           method: 'POST',
+          body: JSON.stringify(settings),
         })
 
-        return { success: true, message: `Digest generator drafted successfully` }
+        return Response.json(
+          {
+            toast: {
+              type: 'success',
+              title: 'Success',
+              description: 'Successfully drafted digest generator',
+            },
+            response: { form_type },
+          },
+          { status: 200 },
+        )
       }
 
       if (form_type === 'backfill') {

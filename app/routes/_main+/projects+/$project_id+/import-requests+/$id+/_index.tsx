@@ -346,15 +346,19 @@ export default function ImportRequestDetailPage() {
             <CardTitle>Items</CardTitle>
           </CardHeader>
           <CardContent className="px-6">
-            <DataTable columns={columnDef} data={importRequest?.items ?? []} />
+            <DataTable
+              columns={columnDef}
+              data={importRequest?.items ?? []}
+              fixed={false}
+            />
           </CardContent>
         </Card>
       </div>
 
       <ModalDelete
         ref={deleteRef}
-        alert="Import Request"
-        title={`Remove from import requests`}
+        title="Remove Import Request"
+        description={`This will remove "${importRequest?.source.name}" from your import requests. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: importRequest?.id,

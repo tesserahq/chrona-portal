@@ -99,8 +99,8 @@ export default function DigestDetailPage() {
 
       <ModalDelete
         ref={deleteRef}
-        alert="Digest"
-        title={`Remove "${digest?.title}" from digests`}
+        title="Remove Digest"
+        description={`This will remove "${digest?.title}" from your digests. This action cannot be undone.`}
         data={{
           project_id: params.project_id,
           id: digest?.id,

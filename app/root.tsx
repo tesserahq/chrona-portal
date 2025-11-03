@@ -36,6 +36,7 @@ import { ProgressBar } from './components/misc/ProgressBar'
 import { AppProvider } from './context/AppContext'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { fab } from '@fortawesome/free-brands-svg-icons'
+import DayPickerCSS from 'react-day-picker/style.css?url'
 
 library.add(fab)
 
@@ -58,6 +59,7 @@ export const links: LinksFunction = () => {
     { rel: 'stylesheet', href: RootCSS },
     { rel: 'stylesheet', href: SpinnerCSS },
     { rel: 'stylesheet', href: CoreUILayoutCSS },
+    { rel: 'stylesheet', href: DayPickerCSS },
   ]
 }
 
