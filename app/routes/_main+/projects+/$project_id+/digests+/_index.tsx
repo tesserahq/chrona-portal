@@ -155,9 +155,20 @@ export default function DigestsPage() {
       },
     },
     {
+      accessorKey: 'published_at',
+      header: 'Published',
+      cell: ({ row }) => {
+        const { published_at } = row.original
+        return published_at ? (
+          <DatePreview label="Published At" date={published_at} />
+        ) : (
+          '-'
+        )
+      },
+    },
+    {
       accessorKey: 'source_created_at',
       header: 'Created',
-      size: 130,
       cell: ({ row }) => {
         const { created_at } = row.original
         return <DatePreview label="Created At" date={created_at} />
@@ -166,7 +177,6 @@ export default function DigestsPage() {
     {
       accessorKey: 'source_updated_at',
       header: 'Updated',
-      size: 130,
       cell: ({ row }) => {
         const { updated_at } = row.original
         return <DatePreview label="Updated At" date={updated_at} />
