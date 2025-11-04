@@ -22,6 +22,7 @@ import { IDigestGenerator } from '@/types/digest'
 import { IPaging } from '@/types/pagination'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { redirectWithToast } from '@/utils/toast.server'
+import { formatDateRangeToUTC } from '@/utils/date-format'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import DigestGeneratorDraft from '@/components/misc/Dialog/DigestGeneratorDraft'
 import {
@@ -360,26 +361,9 @@ export async function action({ request }: ActionFunctionArgs) {
       if (form_type === 'draft') {
         const url = `${apiUrl}/digest-generation-configs/${id}/draft`
         const dateFilter = () => {
-          const formatDateToUTC = (dateStr: string, isEndOfDay: boolean) => {
-            // Parse the date string - handles both ISO strings and Date.toString() format
-            const date = new Date(dateStr)
-
-            // Extract the calendar date from the Date object
-            // Use getFullYear/getMonth/getDate to get the local calendar date
-            // which represents what the user selected, then format as UTC
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, '0')
-            const day = String(date.getDate()).padStart(2, '0')
-
-            if (isEndOfDay) {
-              return `${year}-${month}-${day}T23:59:59Z`
-            }
-            return `${year}-${month}-${day}T00:00:00Z`
-          }
-
           return {
-            from: from ? formatDateToUTC(from as string, false) : undefined,
-            to: to ? formatDateToUTC(to as string, true) : undefined,
+            from: from ? formatDateRangeToUTC(from as string, false) : undefined,
+            to: to ? formatDateRangeToUTC(to as string, true) : undefined,
           }
         }
 

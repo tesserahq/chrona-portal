@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
+import DatePreview from '@/components/misc/DatePreview'
 import EmptyContent from '@/components/misc/EmptyContent'
 import { LabelTooltip } from '@/components/misc/LabelTooltip'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,6 @@ import {
 } from '@/components/ui/tooltip'
 import { fetchApi } from '@/libraries/fetch'
 import { IProject } from '@/types/project'
-import { formatDateAgo } from '@/utils/date-format'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Link, useLoaderData, useNavigate, useParams } from '@remix-run/react'
 import { format } from 'date-fns'
@@ -107,7 +107,7 @@ export default function WorkspaceProjects() {
                       <TooltipProvider delayDuration={200}>
                         <Tooltip>
                           <TooltipTrigger>
-                            <span>{`Last updated ${formatDateAgo(project.updated_at)}`}</span>
+                            <DatePreview label="Last updated" date={project.updated_at} />
                           </TooltipTrigger>
                           <TooltipContent align="start">
                             <span>{format(project.updated_at, 'PPPPpppp')}</span>

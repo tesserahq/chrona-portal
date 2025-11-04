@@ -3,6 +3,7 @@ import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
 import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
+import EntryFilter from '@/components/misc/Dialog/EntryFilter'
 import EmptyContent from '@/components/misc/EmptyContent'
 import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,11 @@ import { IEntry } from '@/types/entry'
 import { IPaging } from '@/types/pagination'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { redirectWithToast } from '@/utils/toast.server'
+import {
+  filterToQueryParams,
+  queryParamsToFilter,
+  type EntryFilterParams,
+} from '@/utils/filter-params'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import {
   Link,
@@ -21,10 +27,11 @@ import {
   useLoaderData,
   useNavigate,
   useParams,
+  useSearchParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { EllipsisVertical, EyeIcon, Filter, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 export function loader({ request }: LoaderFunctionArgs) {
@@ -45,21 +52,26 @@ export function loader({ request }: LoaderFunctionArgs) {
 
 export default function ProjectEntriesPage() {
   const { apiUrl, nodeEnv, size, page } = useLoaderData<typeof loader>()
+  const [searchParams] = useSearchParams()
   const actionData = useActionData<typeof action>()
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const params = useParams()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [isLoadingWithFilters, setIsLoadingWithFilters] = useState<boolean>(false)
   const [entries, setEntries] = useState<IPaging<IEntry>>()
   const [entryDelete, setEntryDelete] = useState<IEntry>()
+  const [filters, setFilters] = useState<EntryFilterParams>({})
   const deleteRef = useRef<React.ElementRef<typeof ModalDelete>>(null)
+  const filterRef = useRef<React.ElementRef<typeof EntryFilter>>(null)
 
   const fetchEntries = async () => {
-    setIsLoading(true)
+    setIsLoadingWithFilters(true)
 
     try {
       const url = `${apiUrl}/projects/${params.project_id}/entries`
+
       const response: IPaging<IEntry> = await fetchApi(url, token!, nodeEnv, {
         pagination: { page, size },
       })
@@ -69,14 +81,44 @@ export default function ProjectEntriesPage() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+      setIsLoadingWithFilters(false)
+    }
+  }
+
+  const fetchEntriesWithFilters = async (filters: EntryFilterParams) => {
+    setIsLoadingWithFilters(true)
+
+    try {
+      const url = `${apiUrl}/projects/${params.project_id}/entries/search`
+
+      const response: IPaging<IEntry> = await fetchApi(url, token!, nodeEnv, {
+        method: 'POST',
+        pagination: { page, size },
+        body: JSON.stringify(filters),
+      })
+
+      setEntries(response)
+    } catch (error: any) {
+      handleApiError(error)
+    } finally {
+      setIsLoading(false)
+      setIsLoadingWithFilters(false)
     }
   }
 
   useEffect(() => {
     if (token) {
-      fetchEntries()
+      const filterParams = queryParamsToFilter(searchParams)
+
+      if (Object.keys(filterParams).length > 0) {
+        setFilters(filterParams)
+        fetchEntriesWithFilters(filterParams)
+      } else {
+        setFilters({})
+        fetchEntries()
+      }
     }
-  }, [token, size, page])
+  }, [token, size, page, searchParams])
 
   useEffect(() => {
     if (actionData?.success) {
@@ -89,162 +131,194 @@ export default function ProjectEntriesPage() {
     }
   }, [actionData])
 
-  const columns: ColumnDef<IEntry>[] = [
-    {
-      accessorKey: 'id',
-      header: '',
-      size: 5,
-      cell: ({ row }) => {
-        const entry = row.original
+  const columns: ColumnDef<IEntry>[] = useMemo(() => {
+    return [
+      {
+        accessorKey: 'id',
+        header: '',
+        size: 5,
+        cell: ({ row }) => {
+          const entry = row.original
 
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="right" className="w-44 p-2">
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() =>
-                  navigate(`/projects/${params.project_id}/entries/${entry.id}`)
-                }>
-                <EyeIcon />
-                <span>View</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {
-                  deleteRef.current?.onOpen()
-                  setEntryDelete(entry)
-                }}>
-                <Trash2 />
-                <span>Delete</span>
-              </Button>
-            </PopoverContent>
-          </Popover>
-        )
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button size="icon" variant="ghost">
+                  <EllipsisVertical />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" side="right" className="w-44 p-2">
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start"
+                  onClick={() =>
+                    navigate(`/projects/${params.project_id}/entries/${entry.id}`)
+                  }>
+                  <EyeIcon />
+                  <span>View</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    deleteRef.current?.onOpen()
+                    setEntryDelete(entry)
+                  }}>
+                  <Trash2 />
+                  <span>Delete</span>
+                </Button>
+              </PopoverContent>
+            </Popover>
+          )
+        },
       },
-    },
-    {
-      accessorKey: 'title',
-      header: 'Title',
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <div className="flex items-center gap-2">
-            <div className="max-w-[300px]">
-              <Link
-                to={`/projects/${params.project_id}/entries/${entry.id}`}
-                className="button-link">
-                <p className="truncate">{entry.title}</p>
-              </Link>
-              <p className="truncate text-xs text-muted-foreground">{entry.body}</p>
+      {
+        accessorKey: 'title',
+        header: 'Title',
+        size: 300,
+        cell: ({ row }) => {
+          const entry = row.original
+          return (
+            <div className="flex items-center gap-2">
+              <div className="max-w-[300px]">
+                <Link
+                  to={`/projects/${params.project_id}/entries/${entry.id}`}
+                  className="button-link">
+                  <p className="truncate">{entry.title}</p>
+                </Link>
+                <p className="truncate text-xs text-muted-foreground">{entry.body}</p>
+              </div>
             </div>
-          </div>
-        )
+          )
+        },
       },
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      cell: ({ row }) => {
-        const tags = row.original.tags || []
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => {
+          const tags = row.original.tags || []
 
-        return <TagsPreview tags={tags} />
+          return <TagsPreview tags={tags} maxVisible={2} />
+        },
       },
-    },
-    {
-      accessorKey: 'source.name',
-      header: 'Source',
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <div className="max-w-[200px]">
-            <p className="truncate text-sm font-medium">{entry.source.name}</p>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'source_author.author.display_name',
-      header: 'Author',
-      cell: ({ row }) => {
-        const entry = row.original
-        return (
-          <div className="flex items-center gap-2">
-            <div className="max-w-[150px]">
-              <p className="truncate text-sm font-medium">
-                {entry.source_author.author.display_name}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {entry.source_author.author.email}
-              </p>
+      {
+        accessorKey: 'source.name',
+        header: 'Source',
+        size: 100,
+        cell: ({ row }) => {
+          const entry = row.original
+          return (
+            <div className="max-w-[200px]">
+              <p className="truncate text-sm font-medium">{entry.source.name}</p>
             </div>
-          </div>
-        )
+          )
+        },
       },
-    },
-    {
-      accessorKey: 'source_assignee.author.display_name',
-      header: 'Assignee',
-      cell: ({ row }) => {
-        const entry = row.original
+      {
+        accessorKey: 'source_author.author.display_name',
+        header: 'Author',
+        cell: ({ row }) => {
+          const entry = row.original
+          return (
+            <div className="flex items-center gap-2">
+              <div className="max-w-[150px]">
+                <p className="truncate text-sm font-medium">
+                  {entry.source_author.author.display_name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {entry.source_author.author.email}
+                </p>
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'source_assignee.author.display_name',
+        header: 'Assignee',
+        cell: ({ row }) => {
+          const entry = row.original
 
-        return (
-          <div className="flex items-center gap-2">
-            <div className="max-w-[150px]">
-              <p className="truncate text-sm font-medium">
-                {entry?.source_assignee?.author?.display_name}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {entry?.source_assignee?.author?.email}
-              </p>
+          return (
+            <div className="flex items-center gap-2">
+              <div className="max-w-[150px]">
+                <p className="truncate text-sm font-medium">
+                  {entry?.source_assignee?.author?.display_name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {entry?.source_assignee?.author?.email}
+                </p>
+              </div>
             </div>
-          </div>
-        )
+          )
+        },
       },
-    },
-    {
-      accessorKey: 'source_created_at',
-      header: 'Created',
-      size: 130,
-      cell: ({ row }) => {
-        const { source_created_at } = row.original
-        return <DatePreview label="Created At" date={source_created_at} />
+      {
+        accessorKey: 'source_created_at',
+        header: 'Created',
+        size: 130,
+        cell: ({ row }) => {
+          const { source_created_at } = row.original
+          return <DatePreview label="Created At" date={source_created_at} />
+        },
       },
-    },
-    {
-      accessorKey: 'source_updated_at',
-      header: 'Updated',
-      size: 130,
-      cell: ({ row }) => {
-        const { source_updated_at } = row.original
-        return <DatePreview label="Updated At" date={source_updated_at} />
+      {
+        accessorKey: 'source_updated_at',
+        header: 'Updated',
+        size: 130,
+        cell: ({ row }) => {
+          const { source_updated_at } = row.original
+          return <DatePreview label="Updated At" date={source_updated_at} />
+        },
       },
-    },
-  ]
+    ]
+  }, [entries])
+
+  const emptyContent = (
+    <EmptyContent
+      image="/images/empty-document.png"
+      title="No entries found"
+      description="This project doesn't have any entries yet. Entries will appear here once data is imported or created."
+    />
+  )
+
+  const emptySearchContent = (
+    <EmptyContent
+      image="/images/empty-document.png"
+      title="No entries found"
+      description="No entries found with the current filters. Try adjusting your filters to find entries that match your criteria."
+    />
+  )
+
+  const isEmpty =
+    entries?.items.length === 0 &&
+    Object.keys(filters).length === 0 &&
+    !isLoading &&
+    !isLoadingWithFilters
 
   if (isLoading) return <AppPreloader />
 
   return (
     <div className="h-full animate-slide-up">
-      <div className="mb-5 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <h1 className="text-2xl font-bold dark:text-foreground">Entries</h1>
+        <Button size="sm" onClick={() => filterRef.current?.onOpen()}>
+          <Filter />
+          <div className="flex items-center gap-1">
+            Filter
+            {Object.keys(filters).length > 0 && <b>({Object.keys(filters).length})</b>}
+          </div>
+        </Button>
       </div>
 
-      {entries?.items.length === 0 ? (
-        <EmptyContent
-          image="/images/empty-document.png"
-          title="No entries found"
-          description="This project doesn't have any entries yet. Entries will appear here once data is imported or created."></EmptyContent>
+      {isEmpty ? (
+        emptyContent
       ) : (
         <DataTable
           columns={columns}
           data={entries?.items || []}
+          isLoading={isLoadingWithFilters}
+          empty={emptySearchContent}
           meta={{
             page: entries?.page || 1,
             pages: entries?.pages || 1,
@@ -262,6 +336,55 @@ export default function ProjectEntriesPage() {
           project_id: params.project_id,
           id: entryDelete?.id,
           token: token!,
+        }}
+      />
+
+      <EntryFilter
+        ref={filterRef}
+        initialTags={filters.tags}
+        initialCreatedAt={filters.created_at}
+        initialUpdatedAt={filters.updated_at}
+        onFilter={(tags, createdAt, updatedAt) => {
+          // setIsLoadingWithFilters(true)
+
+          const filterParams: EntryFilterParams = {
+            tags: tags.length > 0 ? tags : undefined,
+            created_at: {
+              from: createdAt.from,
+              to: createdAt.to,
+            },
+            updated_at: {
+              from: updatedAt.from,
+              to: updatedAt.to,
+            },
+          }
+
+          const queryString = filterToQueryParams(filterParams)
+
+          // Preserve existing pagination params
+          const newSearchParams = new URLSearchParams(searchParams)
+
+          // Remove old filter params
+          newSearchParams.delete('tags[]')
+          newSearchParams.delete('created_at[from]')
+          newSearchParams.delete('created_at[to]')
+          newSearchParams.delete('updated_at[from]')
+          newSearchParams.delete('updated_at[to]')
+
+          // Add new filter params
+          if (queryString) {
+            const filterParamsObj = new URLSearchParams(queryString)
+            filterParamsObj.forEach((value, key) => {
+              if (key.endsWith('[]')) {
+                newSearchParams.append(key, value)
+              } else {
+                newSearchParams.set(key, value)
+              }
+            })
+          }
+
+          const finalQuery = newSearchParams.toString()
+          navigate(finalQuery ? `?${finalQuery}` : window.location.pathname)
         }}
       />
     </div>
