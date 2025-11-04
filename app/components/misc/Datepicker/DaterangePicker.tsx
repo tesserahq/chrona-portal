@@ -41,7 +41,7 @@ export function DaterangePicker({ onChange, initialFrom, initialTo, className }:
           variant="outline"
           data-empty={!dateFilter.from || !dateFilter.to}
           className={cn(
-            'justify-start text-left font-normal data-[empty=true]:text-muted-foreground',
+            'justify-start bg-transparent text-left font-normal data-[empty=true]:text-muted-foreground',
             className,
           )}>
           <CalendarIcon />
