@@ -7,7 +7,7 @@ import { cn } from '@/utils/misc'
 import { Plus, Tag, Trash2, X } from 'lucide-react'
 import { forwardRef, useImperativeHandle, useState } from 'react'
 import { DaterangePicker } from '../Datepicker/DaterangePicker'
-import { formatDateRangeToUTC } from '@/utils/date-format'
+// import { formatDateRangeToUTC } from '@/utils/date-format'
 
 interface FuncProps {
   onOpen: () => void
@@ -26,7 +26,7 @@ interface IProps {
 
 const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
   {
-    onFilter,
+    // onFilter,
     initialTags = [],
     initialCreatedAt = { from: null, to: null },
     initialUpdatedAt = { from: null, to: null },
@@ -80,17 +80,17 @@ const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
 
   const onSubmit = () => {
     // Format date range to UTC
-    const created_at = {
-      from: createdAt.from ? formatDateRangeToUTC(createdAt.from, false) : null,
-      to: createdAt.to ? formatDateRangeToUTC(createdAt.to, true) : null,
-    }
+    // const created_at = {
+    //   from: createdAt.from ? formatDateRangeToUTC(createdAt.from, false) : null,
+    //   to: createdAt.to ? formatDateRangeToUTC(createdAt.to, true) : null,
+    // }
 
-    const updated_at = {
-      from: updatedAt.from ? formatDateRangeToUTC(updatedAt.from, false) : null,
-      to: updatedAt.to ? formatDateRangeToUTC(updatedAt.to, true) : null,
-    }
+    // const updated_at = {
+    //   from: updatedAt.from ? formatDateRangeToUTC(updatedAt.from, false) : null,
+    //   to: updatedAt.to ? formatDateRangeToUTC(updatedAt.to, true) : null,
+    // }
 
-    onFilter(tags, created_at, updated_at)
+    // onFilter(tags)
     onClose()
   }
 
@@ -142,9 +142,9 @@ const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
             <Label>Created At</Label>
             <div className="flex items-center gap-2">
               <DaterangePicker
-                initialFrom={createdAt.from}
-                initialTo={createdAt.to}
-                className="w-full"
+                // initialFrom={createdAt.from}
+                // initialTo={createdAt.to}
+                // className="w-full"
                 onChange={(start, end) => {
                   setCreatedAt({
                     from: start?.toString() || null,
@@ -168,9 +168,9 @@ const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
             <Label>Updated At</Label>
             <div className="flex items-center gap-2">
               <DaterangePicker
-                initialFrom={updatedAt.from}
-                initialTo={updatedAt.to}
-                className="w-full"
+                // initialFrom={updatedAt.from}
+                // initialTo={updatedAt.to}
+                // className="w-full"
                 onChange={(start, end) => {
                   setUpdatedAt({
                     from: start?.toString() || null,
