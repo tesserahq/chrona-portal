@@ -56,6 +56,7 @@ export function DatetimePicker({ currentDate, onChange }: IProps) {
     const newSelectedDate = new Date(year, month, day, hours, minutes)
     setSelected(newSelectedDate)
     onChange(newSelectedDate)
+    setOpen(false)
   }
 
   const handleDaySelect = (date: Date | undefined) => {
@@ -75,6 +76,7 @@ export function DatetimePicker({ currentDate, onChange }: IProps) {
 
     setSelected(newDate)
     onChange(newDate)
+    setOpen(false)
   }
 
   return (
