@@ -1,50 +1,18 @@
-import {
-  differenceInDays,
-  differenceInHours,
-  differenceInMonths,
-  differenceInWeeks,
-  format,
-  isSameDay,
-} from 'date-fns'
+export const formatDateRangeToUTC = (dateStr: string, isEndOfDay: boolean) => {
+  // Parse the date string - handles both ISO strings and Date.toString() format
+  const date = new Date(dateStr)
 
-export const formatDateAgo = (date: string) => {
-  const now = new Date()
-  const currentDate = new Date(date)
+  // Extract the calendar date from the Date object
+  // Use getFullYear/getMonth/getDate to get the local calendar date
+  // which represents what the user selected, then format as UTC
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
 
-  if (isSameDay(now, currentDate)) {
-    return 'Today'
+  if (isEndOfDay) {
+    return `${year}-${month}-${day}T23:59:59Z`
   }
-
-  if (
-    differenceInHours(now, currentDate) > 0 &&
-    differenceInHours(now, currentDate) < 24
-  ) {
-    const days = differenceInHours(now, currentDate)
-    return `${days} hour${days > 1 ? 's' : ''} ago`
-  }
-
-  if (differenceInDays(now, currentDate) >= 0 && differenceInDays(now, currentDate) < 7) {
-    const days = differenceInDays(now, currentDate)
-    return `${days} day${days > 1 ? 's' : ''} ago`
-  }
-
-  if (
-    differenceInWeeks(now, currentDate) >= 0 &&
-    differenceInWeeks(now, currentDate) < 4
-  ) {
-    const weeks = differenceInWeeks(now, currentDate)
-    return `${weeks} week${weeks > 1 ? 's' : ''} ago`
-  }
-
-  if (
-    differenceInMonths(now, currentDate) >= 0 &&
-    differenceInMonths(now, currentDate) < 12
-  ) {
-    const months = differenceInMonths(now, currentDate)
-    return `${months} month${months > 1 ? 's' : ''} ago`
-  }
-
-  return format(currentDate, 'MMM dd, yyyy')
+  return `${year}-${month}-${day}T00:00:00Z`
 }
 
 /**
