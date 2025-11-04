@@ -15,12 +15,12 @@ interface FuncProps {
 
 interface IProps {
   initialTags?: string[]
-  initialCreatedAt?: { from: string | null; to: string | null }
-  initialUpdatedAt?: { from: string | null; to: string | null }
+  initialSourceCreatedAt?: { from: string | null; to: string | null }
+  initialSourceUpdatedAt?: { from: string | null; to: string | null }
   onFilter: (
     tags: string[],
-    createdAt: { from: string | null; to: string | null },
-    updatedAt: { from: string | null; to: string | null },
+    sourceCreatedAt: { from: string | null; to: string | null },
+    sourceUpdatedAt: { from: string | null; to: string | null },
   ) => void
 }
 
@@ -28,29 +28,29 @@ const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
   {
     onFilter,
     initialTags = [],
-    initialCreatedAt = { from: null, to: null },
-    initialUpdatedAt = { from: null, to: null },
+    initialSourceCreatedAt = { from: null, to: null },
+    initialSourceUpdatedAt = { from: null, to: null },
   }: IProps,
   ref,
 ) => {
   const [open, setOpen] = useState<boolean>(false)
   const [tags, setTags] = useState<string[]>(initialTags)
   const [newTag, setNewTag] = useState<string>('')
-  const [createdAt, setCreatedAt] = useState<{
+  const [sourceCreatedAt, setSourceCreatedAt] = useState<{
     from: string | null
     to: string | null
-  }>(initialCreatedAt)
-  const [updatedAt, setUpdatedAt] = useState<{
+  }>(initialSourceCreatedAt)
+  const [sourceUpdatedAt, setSourceUpdatedAt] = useState<{
     from: string | null
     to: string | null
-  }>(initialUpdatedAt)
+  }>(initialSourceUpdatedAt)
 
   useImperativeHandle(ref, () => ({
     onOpen() {
       // Reset to initial values when opening
       setTags(initialTags)
-      setCreatedAt(initialCreatedAt)
-      setUpdatedAt(initialUpdatedAt)
+      setSourceCreatedAt(initialSourceCreatedAt)
+      setSourceUpdatedAt(initialSourceUpdatedAt)
       setOpen(true)
     },
   }))
@@ -74,23 +74,23 @@ const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
     setOpen(false)
     setTags([])
     setNewTag('')
-    setCreatedAt({ from: null, to: null })
-    setUpdatedAt({ from: null, to: null })
+    setSourceCreatedAt({ from: null, to: null })
+    setSourceUpdatedAt({ from: null, to: null })
   }
 
   const onSubmit = () => {
     // Format date range to UTC
-    const created_at = {
-      from: createdAt.from ? formatDateRangeToUTC(createdAt.from, false) : null,
-      to: createdAt.to ? formatDateRangeToUTC(createdAt.to, true) : null,
+    const source_created_at = {
+      from: sourceCreatedAt.from ? formatDateRangeToUTC(sourceCreatedAt.from, false) : null,
+      to: sourceCreatedAt.to ? formatDateRangeToUTC(sourceCreatedAt.to, true) : null,
     }
 
-    const updated_at = {
-      from: updatedAt.from ? formatDateRangeToUTC(updatedAt.from, false) : null,
-      to: updatedAt.to ? formatDateRangeToUTC(updatedAt.to, true) : null,
+    const source_updated_at = {
+      from: sourceUpdatedAt.from ? formatDateRangeToUTC(sourceUpdatedAt.from, false) : null,
+      to: sourceUpdatedAt.to ? formatDateRangeToUTC(sourceUpdatedAt.to, true) : null,
     }
 
-    onFilter(tags, created_at, updated_at)
+    onFilter(tags, source_created_at, source_updated_at)
     onClose()
   }
 
@@ -141,52 +141,52 @@ const EntryFilter: React.ForwardRefRenderFunction<FuncProps, IProps> = (
             </div>
           </div>
 
-          {/* Created At */}
+          {/* Source Created At */}
           <div className="mb-3 flex flex-col">
-            <Label>Created At</Label>
+            <Label>Source Created At</Label>
             <div className="flex items-center gap-2">
               <DaterangePicker
-                initialFrom={createdAt.from}
-                initialTo={createdAt.to}
+                initialFrom={sourceCreatedAt.from}
+                initialTo={sourceCreatedAt.to}
                 className="w-full"
                 onChange={(start, end) => {
-                  setCreatedAt({
+                  setSourceCreatedAt({
                     from: start?.toString() || null,
                     to: end?.toString() || null,
                   })
                 }}
               />
-              {(createdAt.from || createdAt.to) && (
+              {(sourceCreatedAt.from || sourceCreatedAt.to) && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setCreatedAt({ from: null, to: null })}>
+                  onClick={() => setSourceCreatedAt({ from: null, to: null })}>
                   <Trash2 />
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Updated At */}
+          {/* Source Updated At */}
           <div className="mb-3 flex flex-col">
-            <Label>Updated At</Label>
+            <Label>Source Updated At</Label>
             <div className="flex items-center gap-2">
               <DaterangePicker
-                initialFrom={updatedAt.from}
-                initialTo={updatedAt.to}
+                initialFrom={sourceUpdatedAt.from}
+                initialTo={sourceUpdatedAt.to}
                 className="w-full"
                 onChange={(start, end) => {
-                  setUpdatedAt({
+                  setSourceUpdatedAt({
                     from: start?.toString() || null,
                     to: end?.toString() || null,
                   })
                 }}
               />
-              {(updatedAt.from || updatedAt.to) && (
+              {(sourceUpdatedAt.from || sourceUpdatedAt.to) && (
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setUpdatedAt({ from: null, to: null })}>
+                  onClick={() => setSourceUpdatedAt({ from: null, to: null })}>
                   <Trash2 />
                 </Button>
               )}

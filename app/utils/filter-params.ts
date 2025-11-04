@@ -4,11 +4,11 @@
 
 export interface EntryFilterParams {
   tags?: string[]
-  created_at?: {
+  source_created_at?: {
     from: string | null
     to: string | null
   }
-  updated_at?: {
+  source_updated_at?: {
     from: string | null
     to: string | null
   }
@@ -29,23 +29,31 @@ export const filterToQueryParams = (filters: EntryFilterParams): string => {
     })
   }
 
-  // Handle created_at date range
-  if (filters.created_at) {
-    if (filters.created_at.from) {
-      params.push(`created_at[from]=${encodeURIComponent(filters.created_at.from)}`)
+  // Handle source_created_at date range
+  if (filters.source_created_at) {
+    if (filters.source_created_at.from) {
+      params.push(
+        `source_created_at[from]=${encodeURIComponent(filters.source_created_at.from)}`,
+      )
     }
-    if (filters.created_at.to) {
-      params.push(`created_at[to]=${encodeURIComponent(filters.created_at.to)}`)
+    if (filters.source_created_at.to) {
+      params.push(
+        `source_created_at[to]=${encodeURIComponent(filters.source_created_at.to)}`,
+      )
     }
   }
 
-  // Handle updated_at date range
-  if (filters.updated_at) {
-    if (filters.updated_at.from) {
-      params.push(`updated_at[from]=${encodeURIComponent(filters.updated_at.from)}`)
+  // Handle source_updated_at date range
+  if (filters.source_updated_at) {
+    if (filters.source_updated_at.from) {
+      params.push(
+        `source_updated_at[from]=${encodeURIComponent(filters.source_updated_at.from)}`,
+      )
     }
-    if (filters.updated_at.to) {
-      params.push(`updated_at[to]=${encodeURIComponent(filters.updated_at.to)}`)
+    if (filters.source_updated_at.to) {
+      params.push(
+        `source_updated_at[to]=${encodeURIComponent(filters.source_updated_at.to)}`,
+      )
     }
   }
 
@@ -71,21 +79,21 @@ export const queryParamsToFilter = (
     filters.tags = tags
   }
 
-  // Extract created_at date range
-  const createdAtFrom = params.get('created_at[from]')
-  const createdAtTo = params.get('created_at[to]')
+  // Extract source_created_at date range
+  const createdAtFrom = params.get('source_created_at[from]')
+  const createdAtTo = params.get('source_created_at[to]')
   if (createdAtFrom || createdAtTo) {
-    filters.created_at = {
+    filters.source_created_at = {
       from: createdAtFrom || null,
       to: createdAtTo || null,
     }
   }
 
-  // Extract updated_at date range
-  const updatedAtFrom = params.get('updated_at[from]')
-  const updatedAtTo = params.get('updated_at[to]')
+  // Extract source_updated_at date range
+  const updatedAtFrom = params.get('source_updated_at[from]')
+  const updatedAtTo = params.get('source_updated_at[to]')
   if (updatedAtFrom || updatedAtTo) {
-    filters.updated_at = {
+    filters.source_updated_at = {
       from: updatedAtFrom || null,
       to: updatedAtTo || null,
     }
