@@ -40,6 +40,7 @@ export interface IDigest {
     color?: string
   }
   entries?: IEntry[]
+  published_at: string
 }
 
 export interface IDigestPaginationResponse {

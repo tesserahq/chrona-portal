@@ -1,9 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import MarkdownEditor from '@/components/misc/Markdown/Editor'
+import { DatetimePicker } from '@/components/misc/Datepicker/DatetimePicker'
+import { Label } from '@/components/ui/label'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
+import { formatDatetimeToUTC } from '@/utils/date-format'
 import { redirectWithToast } from '@/utils/toast.server'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import { useLoaderData, useNavigate, useNavigation, useParams } from '@remix-run/react'
@@ -25,16 +28,16 @@ export default function DigestEdit() {
   const { token } = useApp()
   const handleApiError = useHandleApiError()
   const [isLoading, setIsLoading] = useState<boolean>(true)
-  // const [digest, setDigest] = useState<IDigest | null>(null)
   const [body, setBody] = useState<string>('')
   const [status, setStatus] = useState<string>('')
+  const [publishedDate, setPublishedDate] = useState<Date | null>(null)
 
   const fetchDigest = async () => {
     try {
       const response = await fetchApi(`${apiUrl}/digests/${digestId}`, token!, nodeEnv)
-      // setDigest(response)
       setBody(response.body || '')
       setStatus(response.status || '')
+      setPublishedDate(response.published_at ? new Date(response.published_at) : null)
     } catch (error) {
       handleApiError(error)
     } finally {
@@ -71,9 +74,23 @@ export default function DigestEdit() {
         isSubmitting={navigation.state === 'submitting'}
         hiddenInputs={{
           token: token!,
+          published_at: formatDatetimeToUTC(publishedDate),
         }}>
-        <div className="mb-3 space-y-2">
-          <label className="text-sm font-medium">Content</label>
+        <div className="mb-3 space-y-3">
+          <FormSelect
+            label="Status"
+            name="status"
+            value={status}
+            onValueChange={setStatus}
+            options={statusOptions}
+          />
+
+          <div className="flex flex-col">
+            <Label>Published At</Label>
+            <DatetimePicker currentDate={publishedDate} onChange={setPublishedDate} />
+          </div>
+
+          <Label>Content</Label>
           <MarkdownEditor
             value={body}
             onUpdateChange={setBody}
@@ -82,14 +99,6 @@ export default function DigestEdit() {
             autofocus
           />
         </div>
-
-        <FormSelect
-          label="Status"
-          name="status"
-          value={status}
-          onValueChange={setStatus}
-          options={statusOptions}
-        />
       </FormWrapper>
     </div>
   )
@@ -103,6 +112,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const token = formData.get('token') as string
   const body = formData.get('body') as string
   const status = formData.get('status') as string
+  const published_at = formData.get('published_at') as string
 
   try {
     await fetchApi(`${apiUrl}/digests/${params.id}`, token, nodeEnv, {
@@ -110,6 +120,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
       body: JSON.stringify({
         body,
         status,
+        published_at: published_at || null,
       }),
     })
 
