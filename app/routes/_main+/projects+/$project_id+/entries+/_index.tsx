@@ -255,7 +255,7 @@ export default function ProjectEntriesPage() {
       },
       {
         accessorKey: 'source_created_at',
-        header: 'Created',
+        header: 'Source Created',
         size: 130,
         cell: ({ row }) => {
           const { source_created_at } = row.original
@@ -264,7 +264,7 @@ export default function ProjectEntriesPage() {
       },
       {
         accessorKey: 'source_updated_at',
-        header: 'Updated',
+        header: 'Source Updated',
         size: 130,
         cell: ({ row }) => {
           const { source_updated_at } = row.original
@@ -342,18 +342,18 @@ export default function ProjectEntriesPage() {
       <EntryFilter
         ref={filterRef}
         initialTags={filters.tags}
-        initialCreatedAt={filters.created_at}
-        initialUpdatedAt={filters.updated_at}
+        initialSourceCreatedAt={filters.source_created_at}
+        initialSourceUpdatedAt={filters.source_updated_at}
         onFilter={(tags, createdAt, updatedAt) => {
           // setIsLoadingWithFilters(true)
 
           const filterParams: EntryFilterParams = {
             tags: tags.length > 0 ? tags : undefined,
-            created_at: {
+            source_created_at: {
               from: createdAt.from,
               to: createdAt.to,
             },
-            updated_at: {
+            source_updated_at: {
               from: updatedAt.from,
               to: updatedAt.to,
             },
@@ -366,10 +366,10 @@ export default function ProjectEntriesPage() {
 
           // Remove old filter params
           newSearchParams.delete('tags[]')
-          newSearchParams.delete('created_at[from]')
-          newSearchParams.delete('created_at[to]')
-          newSearchParams.delete('updated_at[from]')
-          newSearchParams.delete('updated_at[to]')
+          newSearchParams.delete('source_created_at[from]')
+          newSearchParams.delete('source_created_at[to]')
+          newSearchParams.delete('source_updated_at[from]')
+          newSearchParams.delete('source_updated_at[to]')
 
           // Add new filter params
           if (queryString) {
