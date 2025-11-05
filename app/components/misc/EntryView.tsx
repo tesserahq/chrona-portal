@@ -123,7 +123,23 @@ export const EntryView = ({ entry }: EntryViewProps) => {
 
               {/* Created At */}
               <div className="d-item">
-                <dt className="d-label">Created At</dt>
+                <dt className="d-label">Created at</dt>
+                <dd className="d-content">
+                  {format(entry.created_at || '', 'PPpp')}
+                </dd>
+              </div>
+
+              {/* Source Updated At */}
+              <div className="d-item">
+                <dt className="d-label">Updated at</dt>
+                <dd className="d-content">
+                  {format(entry.updated_at || '', 'PPpp')}
+                </dd>
+              </div>
+
+              {/* Created At */}
+              <div className="d-item">
+                <dt className="d-label">Source Created at</dt>
                 <dd className="d-content">
                   {format(entry.source_created_at || '', 'PPpp')}
                 </dd>
@@ -131,7 +147,7 @@ export const EntryView = ({ entry }: EntryViewProps) => {
 
               {/* Updated At */}
               <div className="d-item">
-                <dt className="d-label">Updated At</dt>
+                <dt className="d-label">Source Updated at</dt>
                 <dd className="d-content">
                   {format(entry.source_updated_at || '', 'PPpp')}
                 </dd>

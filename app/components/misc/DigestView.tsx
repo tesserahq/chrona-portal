@@ -189,7 +189,7 @@ export const DigestView = ({
                       <div className="flex items-center gap-1">
                         <CalendarDays size={12} className="text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">
-                          Created {format(entry?.created_at || '', 'PPpp')}
+                          Created {format(entry?.source_created_at || '', 'PPpp')}
                         </span>
 
                         <div className="ml-2">
