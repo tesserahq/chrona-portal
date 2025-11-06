@@ -33,6 +33,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { EllipsisVertical, EyeIcon, Filter, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -259,7 +260,7 @@ export default function ProjectEntriesPage() {
         size: 130,
         cell: ({ row }) => {
           const { source_created_at } = row.original
-          return <DatePreview label="Created At" date={source_created_at} />
+          return format(source_created_at || '', 'PPpp')
         },
       },
       {
@@ -268,7 +269,16 @@ export default function ProjectEntriesPage() {
         size: 130,
         cell: ({ row }) => {
           const { source_updated_at } = row.original
-          return <DatePreview label="Updated At" date={source_updated_at} />
+          return format(source_updated_at || '', 'PPpp')
+        },
+      },
+      {
+        accessorKey: 'last_update_created_at',
+        header: 'Last Updated',
+        size: 130,
+        cell: ({ row }) => {
+          const { source_updated_at } = row.original
+          return format(source_updated_at || '', 'PPpp')
         },
       },
     ]
