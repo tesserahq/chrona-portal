@@ -135,7 +135,7 @@ export default function PublicGazetteSharePage() {
     const allDigests = [...digests, ...sections.flatMap((section) => section.digests)]
     const grouped = allDigests.reduce(
       (acc, digest) => {
-        const date = format(new Date(digest.created_at), 'yyyy-MM-dd')
+        const date = format(new Date(digest.published_at), 'yyyy-MM-dd')
         if (!acc[date]) {
           acc[date] = []
         }
@@ -151,7 +151,8 @@ export default function PublicGazetteSharePage() {
       .reduce(
         (acc, date) => {
           acc[date] = grouped[date].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+            (a, b) =>
+              new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
           )
           return acc
         },
