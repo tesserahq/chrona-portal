@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
-import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import EmptyContent from '@/components/misc/EmptyContent'
 import { StatusBadge } from '@/components/misc/StatusBadge'
@@ -28,6 +27,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { EllipsisVertical, EyeIcon, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -160,7 +160,7 @@ export default function DigestsPage() {
       cell: ({ row }) => {
         const { published_at } = row.original
         return published_at ? (
-          <DatePreview label="Published At" date={published_at} />
+          format(published_at || '', 'PPpp')
         ) : (
           '-'
         )
@@ -171,7 +171,7 @@ export default function DigestsPage() {
       header: 'Created',
       cell: ({ row }) => {
         const { created_at } = row.original
-        return <DatePreview label="Created At" date={created_at} />
+        return format(created_at || '', 'PPpp')
       },
     },
     {
@@ -179,7 +179,7 @@ export default function DigestsPage() {
       header: 'Updated',
       cell: ({ row }) => {
         const { updated_at } = row.original
-        return <DatePreview label="Updated At" date={updated_at} />
+        return format(updated_at || '', 'PPpp')
       },
     },
   ]
