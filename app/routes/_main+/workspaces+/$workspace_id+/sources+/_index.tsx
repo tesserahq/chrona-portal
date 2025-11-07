@@ -14,7 +14,7 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { Database, Edit, EllipsisVertical, EyeIcon, Plus, Trash2 } from 'lucide-react'
+import { Database, Edit, Ellipsis, EyeIcon, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import { useHandleApiError } from '@/hooks/useHandleApiError'
@@ -81,53 +81,6 @@ export default function SourcesPage() {
 
   const columns: ColumnDef<ISource>[] = [
     {
-      accessorKey: 'id',
-      header: '',
-      size: 5,
-      cell: ({ row }) => {
-        const { id } = row.original
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="right" className="w-44 p-2">
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() =>
-                  navigate(`/workspaces/${params.workspace_id}/sources/${id}`)
-                }>
-                <EyeIcon />
-                <span>View</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  navigate(`/workspaces/${params.workspace_id}/sources/${id}/edit`)
-                }}>
-                <Edit />
-                <span>Edit</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {
-                  deleteRef.current?.onOpen()
-                  setSourceDelete(row.original)
-                }}>
-                <Trash2 />
-                <span>Delete</span>
-              </Button>
-            </PopoverContent>
-          </Popover>
-        )
-      },
-    },
-    {
       accessorKey: 'name',
       header: 'Name',
       size: 400,
@@ -175,6 +128,53 @@ export default function SourcesPage() {
       header: 'Updated',
       cell: ({ row }) => {
         return <DatePreview label="Updated At" date={row.original.updated_at} />
+      },
+    },
+    {
+      accessorKey: 'id',
+      header: 'action',
+      size: 5,
+      cell: ({ row }) => {
+        const { id } = row.original
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="outline">
+                <Ellipsis />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="right" className="w-44 p-2">
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() =>
+                  navigate(`/workspaces/${params.workspace_id}/sources/${id}`)
+                }>
+                <EyeIcon />
+                <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  navigate(`/workspaces/${params.workspace_id}/sources/${id}/edit`)
+                }}>
+                <Edit />
+                <span>Edit</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setSourceDelete(row.original)
+                }}>
+                <Trash2 />
+                <span>Delete</span>
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )
       },
     },
   ]

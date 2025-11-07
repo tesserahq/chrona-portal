@@ -24,10 +24,10 @@ import {
   useSearchParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, Pencil, Trash2 } from 'lucide-react'
+import { format } from 'date-fns'
+import { Ellipsis, EyeIcon, Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { format } from 'date-fns'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -51,6 +51,7 @@ export default function DigestsPage() {
   const params = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const [isFirstLoading, setIsFirstLoading] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digests, setDigests] = useState<IDigest[]>([])
   const [pagination, setPagination] = useState<IPagingInfo>({
@@ -66,16 +67,92 @@ export default function DigestsPage() {
 
   const columns: ColumnDef<IDigest>[] = [
     {
+      accessorKey: 'title',
+      header: 'Title',
+      size: 500,
+      cell: ({ row }) => {
+        const { title, id, body, digest_generation_config } = row.original
+        return (
+          <div className="flex items-center gap-3">
+            <div className="w-5">
+              <div
+                className="h-2.5 w-2.5 rounded-full"
+                style={{ background: digest_generation_config?.ui_format?.color }}></div>
+            </div>
+            <div>
+              <Link
+                to={`/projects/${params.project_id}/digests/${id}`}
+                className="button-link">
+                <p className="truncate">{title}</p>
+              </Link>
+              <p className="truncate text-xs text-muted-foreground">{body}</p>
+            </div>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      size: 150,
+      cell: ({ row }) => {
+        const tags = row.original.tags || []
+
+        return <TagsPreview tags={tags} />
+      },
+    },
+    {
+      accessorKey: 'status',
+      size: 120,
+      header: 'Status',
+      cell: ({ row }) => {
+        const status = row.original.status
+
+        return status && <StatusBadge status={status} />
+      },
+    },
+    {
+      accessorKey: 'published_at',
+      header: 'Published',
+      size: 130,
+      cell: ({ row }) => {
+        const { published_at } = row.original
+        return (
+          <span className="text-sm">
+            {published_at ? format(published_at || '', 'PPpp') : '-'}
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: 'source_created_at',
+      header: 'Created',
+      size: 130,
+      cell: ({ row }) => {
+        const { created_at } = row.original
+        return <span className="text-sm">{format(created_at || '', 'PPpp')}</span>
+      },
+    },
+    {
+      accessorKey: 'source_updated_at',
+      header: 'Updated',
+      size: 130,
+      cell: ({ row }) => {
+        const { updated_at } = row.original
+        return <span className="text-sm">{format(updated_at || '', 'PPpp')}</span>
+      },
+    },
+    {
       accessorKey: 'id',
-      header: '',
+      header: 'action',
       size: 5,
       cell: ({ row }) => {
         const digest = row.original
         return (
           <Popover>
             <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
+              <Button size="icon" variant="outline">
+                <Ellipsis />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" side="right" className="w-44 p-2">
@@ -112,79 +189,11 @@ export default function DigestsPage() {
         )
       },
     },
-    {
-      accessorKey: 'title',
-      header: 'Title',
-      size: 300,
-      cell: ({ row }) => {
-        const { title, id, body, digest_generation_config } = row.original
-        return (
-          <div className="flex items-center gap-3">
-            <div
-              className="h-2.5 w-2.5 rounded-full"
-              style={{ background: digest_generation_config?.ui_format?.color }}></div>
-            <div className="max-w-[300px] lg:max-w-[500px]">
-              <Link
-                to={`/projects/${params.project_id}/digests/${id}`}
-                className="button-link">
-                <p className="truncate">{title}</p>
-              </Link>
-              <p className="truncate text-xs text-muted-foreground">{body}</p>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      size: 250,
-      cell: ({ row }) => {
-        const tags = row.original.tags || []
-
-        return <TagsPreview tags={tags} />
-      },
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const status = row.original.status
-
-        return status && <StatusBadge status={status} />
-      },
-    },
-    {
-      accessorKey: 'published_at',
-      header: 'Published',
-      cell: ({ row }) => {
-        const { published_at } = row.original
-        return published_at ? (
-          format(published_at || '', 'PPpp')
-        ) : (
-          '-'
-        )
-      },
-    },
-    {
-      accessorKey: 'source_created_at',
-      header: 'Created',
-      cell: ({ row }) => {
-        const { created_at } = row.original
-        return format(created_at || '', 'PPpp')
-      },
-    },
-    {
-      accessorKey: 'source_updated_at',
-      header: 'Updated',
-      cell: ({ row }) => {
-        const { updated_at } = row.original
-        return format(updated_at || '', 'PPpp')
-      },
-    },
   ]
 
   const fetchDigests = async () => {
+    setIsLoading(true)
+
     try {
       const response: IDigestPaginationResponse = await fetchApi(
         `${apiUrl}/projects/${params.project_id}/digests`,
@@ -206,6 +215,7 @@ export default function DigestsPage() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+      setIsFirstLoading(false)
     }
   }
 
@@ -226,7 +236,7 @@ export default function DigestsPage() {
     }
   }, [actionData])
 
-  if (isLoading) {
+  if (isFirstLoading) {
     return <AppPreloader />
   }
 
@@ -243,7 +253,12 @@ export default function DigestsPage() {
           description="No digests have been created yet for this project."
         />
       ) : (
-        <DataTable columns={columns} data={digests} meta={pagination} />
+        <DataTable
+          columns={columns}
+          data={digests}
+          meta={pagination}
+          isLoading={isLoading}
+        />
       )}
 
       <ModalDelete

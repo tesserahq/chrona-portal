@@ -37,6 +37,15 @@ export const TableCellSkeletons = <TData,>({
         key={`${headerGroup.id}-${skeletonIndex}`}
         className="border-border dark:hover:bg-navy-700">
         {headerGroup.headers.map((header) => {
+          const title = header.column.columnDef.header || ''
+          if (title === 'action') {
+            return (
+              <TableCell key={`${header.id}-${skeletonIndex}`}>
+                <div className="h-8 w-10 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-500"></div>
+              </TableCell>
+            )
+          }
+
           return (
             <TableCell
               key={`${header.id}-${skeletonIndex}`}
@@ -142,20 +151,22 @@ export function DataTable<TData, TValue>({
                   key={headerGroup.id}
                   className="border-border dark:hover:bg-navy-700">
                   {headerGroup.headers.map((header) => {
+                    const title = header.column.columnDef.header || ''
+
                     return (
                       <TableHead
                         key={header.id}
                         className="py-3 font-semibold text-navy-800 dark:text-navy-100"
-                        style={{ width: header.column.columnDef.size }}>
-                        {header.column.columnDef.header ? (
+                        style={{
+                          width:
+                            title === 'action' ? '20px' : header.column.columnDef.size,
+                        }}>
+                        {title && title !== 'action' ? (
                           header.isPlaceholder ? null : (
-                            flexRender(
-                              header.column.columnDef.header || '',
-                              header.getContext(),
-                            )
+                            flexRender(title || '', header.getContext())
                           )
                         ) : (
-                          <div className="w-10"></div>
+                          <></>
                         )}
                       </TableHead>
                     )
@@ -176,7 +187,7 @@ export function DataTable<TData, TValue>({
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="py-2 ps-4 text-navy-800 dark:text-navy-100">
+                        className={`overflow-hidden py-2 ps-4 text-navy-800 dark:text-navy-100 max-w-[${cell.column.columnDef.size === 5 ? 5 : cell.column.columnDef.size}px]`}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}
