@@ -177,7 +177,6 @@ export default function ProjectEntriesPage() {
       {
         accessorKey: 'source_author.author.display_name',
         header: 'Author',
-        size: 250,
         cell: ({ row }) => {
           const entry = row.original
           return (
@@ -197,7 +196,6 @@ export default function ProjectEntriesPage() {
       {
         accessorKey: 'source_assignee.author.display_name',
         header: 'Assignee',
-        size: 250,
         cell: ({ row }) => {
           const entry = row.original
 
