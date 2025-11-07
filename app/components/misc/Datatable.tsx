@@ -37,6 +37,15 @@ export const TableCellSkeletons = <TData,>({
         key={`${headerGroup.id}-${skeletonIndex}`}
         className="border-border dark:hover:bg-navy-700">
         {headerGroup.headers.map((header) => {
+          const title = header.column.columnDef.header || ''
+          if (title === 'action') {
+            return (
+              <TableCell key={`${header.id}-${skeletonIndex}`}>
+                <div className="h-8 w-10 animate-pulse rounded-lg bg-slate-100 dark:bg-slate-500"></div>
+              </TableCell>
+            )
+          }
+
           return (
             <TableCell
               key={`${header.id}-${skeletonIndex}`}
@@ -136,26 +145,28 @@ export function DataTable<TData, TValue>({
       <div className="flex-1 overflow-hidden">
         <div ref={scrollContainerRef} className="no-scrollbar h-full overflow-y-auto">
           <Table>
-            <TableHeader className="sticky top-0 z-10 w-full bg-slate-100/20 shadow-sm backdrop-blur-md dark:bg-slate-800/50">
+            <TableHeader className="table-header sticky top-0 z-50 w-full bg-slate-100/20 shadow backdrop-blur-md dark:bg-slate-800/50">
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow
                   key={headerGroup.id}
-                  className="border-border dark:hover:bg-navy-700">
+                  className="border-none dark:hover:bg-navy-700">
                   {headerGroup.headers.map((header) => {
+                    const title = header.column.columnDef.header || ''
+
                     return (
                       <TableHead
                         key={header.id}
                         className="py-3 font-semibold text-navy-800 dark:text-navy-100"
-                        style={{ width: header.column.columnDef.size }}>
-                        {header.column.columnDef.header ? (
+                        style={{
+                          width:
+                            title === 'action' ? '20px' : header.column.columnDef.size,
+                        }}>
+                        {title && title !== 'action' ? (
                           header.isPlaceholder ? null : (
-                            flexRender(
-                              header.column.columnDef.header || '',
-                              header.getContext(),
-                            )
+                            flexRender(title || '', header.getContext())
                           )
                         ) : (
-                          <div className="w-10"></div>
+                          <div></div>
                         )}
                       </TableHead>
                     )
@@ -172,11 +183,11 @@ export function DataTable<TData, TValue>({
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
-                    className="hover:bg-slate-50 dark:border-border dark:hover:bg-navy-600">
+                    className="border-border hover:bg-slate-50 dark:border-border dark:hover:bg-navy-600">
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="py-2 ps-4 text-navy-800 dark:text-navy-100">
+                        className={`overflow-hidden py-2 ps-4 text-navy-800 dark:text-navy-100 max-w-[${cell.column.columnDef.size === 5 ? 5 : cell.column.columnDef.size}px]`}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
                     ))}

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
-import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import EmptyContent from '@/components/misc/EmptyContent'
 import { StatusBadge } from '@/components/misc/StatusBadge'
@@ -24,7 +23,8 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, RefreshCcw, Trash2 } from 'lucide-react'
+import { format } from 'date-fns'
+import { Ellipsis, EyeIcon, RefreshCcw, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -51,6 +51,7 @@ export default function ImportRequestPage() {
   const params = useParams()
   const handleApiError = useHandleApiError()
   const navigate = useNavigate()
+  const [isFirstLoading, setIsFirstLoading] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [importRequests, setImportRequests] = useState<IPaging<IImportRequest>>()
   const [processingId, setProcessingId] = useState<string>('')
@@ -75,6 +76,7 @@ export default function ImportRequestPage() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+      setIsFirstLoading(false)
     }
   }
 
@@ -95,56 +97,6 @@ export default function ImportRequestPage() {
   }
 
   const columnDef: ColumnDef<IImportRequest>[] = [
-    {
-      accessorKey: 'id',
-      header: '',
-      size: 5,
-      cell: ({ row }) => {
-        const isProcessing = processingId === row.original.id
-
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="right" className="w-44 p-2">
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  navigate(
-                    `/projects/${params.project_id}/import-requests/${row.original.id}`,
-                  )
-                }}>
-                <EyeIcon />
-                <span>View</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  onProcessImportRequest(row.original.id)
-                }}>
-                <RefreshCcw className={cn(isProcessing && 'animate-spin')} />
-                <span>Process</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {
-                  deleteRef.current?.onOpen()
-                  setImportRequestDelete(row.original)
-                }}>
-                <Trash2 />
-                <span>Delete</span>
-              </Button>
-            </PopoverContent>
-          </Popover>
-        )
-      },
-    },
     {
       accessorKey: 'source.name',
       size: 300,
@@ -197,25 +149,75 @@ export default function ImportRequestPage() {
     {
       accessorKey: 'created_at',
       header: 'Created',
-      size: 120,
+      size: 130,
       cell: ({ row }) => {
-        return <DatePreview label="Created At" date={row.original.created_at} />
+        return <span className="text-sm">{format(row.original.created_at, 'PPpp')}</span>
       },
     },
     {
       accessorKey: 'updated_at',
       header: 'Updated',
-      size: 120,
+      size: 130,
       cell: ({ row }) => {
-        return <DatePreview label="Updated At" date={row.original.updated_at} />
+        return <span className="text-sm">{format(row.original.updated_at, 'PPpp')}</span>
       },
     },
     {
       accessorKey: 'finished_at',
       header: 'Finished',
-      size: 120,
+      size: 130,
       cell: ({ row }) => {
-        return <DatePreview label="Finished At" date={row.original.updated_at} />
+        return <span className="text-sm">{format(row.original.updated_at, 'PPpp')}</span>
+      },
+    },
+    {
+      accessorKey: 'id',
+      header: 'action',
+      size: 5,
+      cell: ({ row }) => {
+        const isProcessing = processingId === row.original.id
+
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="outline">
+                <Ellipsis />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="right" className="w-44 p-2">
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  navigate(
+                    `/projects/${params.project_id}/import-requests/${row.original.id}`,
+                  )
+                }}>
+                <EyeIcon />
+                <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  onProcessImportRequest(row.original.id)
+                }}>
+                <RefreshCcw className={cn(isProcessing && 'animate-spin')} />
+                <span>Process</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setImportRequestDelete(row.original)
+                }}>
+                <Trash2 />
+                <span>Delete</span>
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )
       },
     },
   ]
@@ -237,7 +239,7 @@ export default function ImportRequestPage() {
     }
   }, [actionData])
 
-  if (isLoading) return <AppPreloader />
+  if (isFirstLoading) return <AppPreloader />
 
   return (
     <div className="h-full animate-slide-up">
@@ -259,6 +261,7 @@ export default function ImportRequestPage() {
             size: importRequests?.size || 25,
             total: importRequests?.total || 0,
           }}
+          isLoading={isLoading}
         />
       )}
 

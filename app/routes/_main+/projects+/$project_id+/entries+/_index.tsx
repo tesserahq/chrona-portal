@@ -29,7 +29,7 @@ import {
   useSearchParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, Filter, Trash2 } from 'lucide-react'
+import { Ellipsis, EyeIcon, Filter, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -131,11 +131,124 @@ export default function ProjectEntriesPage() {
     }
   }, [actionData])
 
-  const columns: ColumnDef<IEntry>[] = useMemo(() => {
+  const columns = useMemo<ColumnDef<IEntry>[]>(() => {
     return [
       {
+        accessorKey: 'title',
+        header: 'Title',
+        size: 500,
+        cell: ({ row }) => {
+          const entry = row.original
+          return (
+            <div className="flex items-center gap-2">
+              <div>
+                <Link
+                  to={`/projects/${params.project_id}/entries/${entry.id}`}
+                  className="button-link">
+                  <p className="truncate">{entry.title}</p>
+                </Link>
+                <p className="truncate text-xs text-muted-foreground">{entry.body}</p>
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'tags',
+        header: 'Tags',
+        cell: ({ row }) => {
+          const tags = row.original.tags || []
+
+          return <TagsPreview tags={tags} maxVisible={2} />
+        },
+      },
+      {
+        accessorKey: 'source.name',
+        header: 'Source',
+        cell: ({ row }) => {
+          const entry = row.original
+          return (
+            <div>
+              <p className="truncate text-sm font-medium">{entry.source.name}</p>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'source_author.author.display_name',
+        header: 'Author',
+        cell: ({ row }) => {
+          const entry = row.original
+          return (
+            <div className="flex items-center gap-2">
+              <div>
+                <p className="truncate text-sm font-medium">
+                  {entry.source_author.author.display_name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {entry.source_author.author.email}
+                </p>
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'source_assignee.author.display_name',
+        header: 'Assignee',
+        cell: ({ row }) => {
+          const entry = row.original
+
+          return (
+            <div className="flex items-center gap-2">
+              <div>
+                <p className="truncate text-sm font-medium">
+                  {entry?.source_assignee?.author?.display_name}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {entry?.source_assignee?.author?.email}
+                </p>
+              </div>
+            </div>
+          )
+        },
+      },
+      {
+        accessorKey: 'source_created_at',
+        header: 'Source Created',
+        size: 130,
+        cell: ({ row }) => {
+          const { source_created_at } = row.original
+          return (
+            <span className="text-xs">{format(source_created_at || '', 'PPpp')}</span>
+          )
+        },
+      },
+      {
+        accessorKey: 'source_updated_at',
+        header: 'Source Updated',
+        size: 130,
+        cell: ({ row }) => {
+          const { source_updated_at } = row.original
+          return (
+            <span className="text-xs">{format(source_updated_at || '', 'PPpp')}</span>
+          )
+        },
+      },
+      {
+        accessorKey: 'last_update_created_at',
+        header: 'Last Updated',
+        size: 130,
+        cell: ({ row }) => {
+          const { source_updated_at } = row.original
+          return (
+            <span className="text-xs">{format(source_updated_at || '', 'PPpp')}</span>
+          )
+        },
+      },
+      {
         accessorKey: 'id',
-        header: '',
+        header: 'action',
         size: 5,
         cell: ({ row }) => {
           const entry = row.original
@@ -143,8 +256,8 @@ export default function ProjectEntriesPage() {
           return (
             <Popover>
               <PopoverTrigger asChild>
-                <Button size="icon" variant="ghost">
-                  <EllipsisVertical />
+                <Button size="icon" variant="outline">
+                  <Ellipsis />
                 </Button>
               </PopoverTrigger>
               <PopoverContent align="start" side="right" className="w-44 p-2">
@@ -170,114 +283,6 @@ export default function ProjectEntriesPage() {
               </PopoverContent>
             </Popover>
           )
-        },
-      },
-      {
-        accessorKey: 'title',
-        header: 'Title',
-        size: 300,
-        cell: ({ row }) => {
-          const entry = row.original
-          return (
-            <div className="flex items-center gap-2">
-              <div className="max-w-[300px]">
-                <Link
-                  to={`/projects/${params.project_id}/entries/${entry.id}`}
-                  className="button-link">
-                  <p className="truncate">{entry.title}</p>
-                </Link>
-                <p className="truncate text-xs text-muted-foreground">{entry.body}</p>
-              </div>
-            </div>
-          )
-        },
-      },
-      {
-        accessorKey: 'tags',
-        header: 'Tags',
-        cell: ({ row }) => {
-          const tags = row.original.tags || []
-
-          return <TagsPreview tags={tags} maxVisible={2} />
-        },
-      },
-      {
-        accessorKey: 'source.name',
-        header: 'Source',
-        size: 100,
-        cell: ({ row }) => {
-          const entry = row.original
-          return (
-            <div className="max-w-[200px]">
-              <p className="truncate text-sm font-medium">{entry.source.name}</p>
-            </div>
-          )
-        },
-      },
-      {
-        accessorKey: 'source_author.author.display_name',
-        header: 'Author',
-        cell: ({ row }) => {
-          const entry = row.original
-          return (
-            <div className="flex items-center gap-2">
-              <div className="max-w-[150px]">
-                <p className="truncate text-sm font-medium">
-                  {entry.source_author.author.display_name}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {entry.source_author.author.email}
-                </p>
-              </div>
-            </div>
-          )
-        },
-      },
-      {
-        accessorKey: 'source_assignee.author.display_name',
-        header: 'Assignee',
-        cell: ({ row }) => {
-          const entry = row.original
-
-          return (
-            <div className="flex items-center gap-2">
-              <div className="max-w-[150px]">
-                <p className="truncate text-sm font-medium">
-                  {entry?.source_assignee?.author?.display_name}
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {entry?.source_assignee?.author?.email}
-                </p>
-              </div>
-            </div>
-          )
-        },
-      },
-      {
-        accessorKey: 'source_created_at',
-        header: 'Source Created',
-        size: 130,
-        cell: ({ row }) => {
-          const { source_created_at } = row.original
-          return format(source_created_at || '', 'PPpp')
-        },
-      },
-      {
-        accessorKey: 'source_updated_at',
-        header: 'Source Updated',
-        size: 130,
-        cell: ({ row }) => {
-          const { source_updated_at } = row.original
-          return format(source_updated_at || '', 'PPpp')
-        },
-      },
-      {
-        accessorKey: 'last_update_created_at',
-        header: 'Last Updated',
-        size: 130,
-        cell: ({ row }) => {
-          const { source_updated_at } = row.original
-          return format(source_updated_at || '', 'PPpp')
         },
       },
     ]

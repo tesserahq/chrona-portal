@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
-import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import ShareDialog from '@/components/misc/Dialog/ShareDialog'
 import EmptyContent from '@/components/misc/EmptyContent'
@@ -26,7 +25,8 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { Edit, EllipsisVertical, EyeIcon, Share2, Trash2 } from 'lucide-react'
+import { format } from 'date-fns'
+import { Edit, Ellipsis, EyeIcon, Share2, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -53,6 +53,7 @@ export default function ProjectGazettesPage() {
   const handleApiError = useHandleApiError()
   const params = useParams()
   const navigate = useNavigate()
+  const [isFirstLoading, setIsFirstLoading] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [gazettes, setGazettes] = useState<IPaging<IGazette>>()
   const [gazetteDelete, setGazetteDelete] = useState<IGazette>()
@@ -73,6 +74,7 @@ export default function ProjectGazettesPage() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+      setIsFirstLoading(false)
     }
   }
 
@@ -95,8 +97,88 @@ export default function ProjectGazettesPage() {
 
   const columns: ColumnDef<IGazette>[] = [
     {
+      accessorKey: 'name',
+      header: 'Name',
+      cell: ({ row }) => {
+        const gazette = row.original
+        return (
+          <div className="max-w-[200px]">
+            <Link
+              to={`/projects/${params.project_id}/gazettes/${gazette.id}`}
+              className="button-link">
+              <p className="truncate">{gazette.name}</p>
+            </Link>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'header',
+      header: 'Header',
+      cell: ({ row }) => {
+        const gazette = row.original
+        return (
+          <div>
+            <p className="truncate font-semibold">{gazette.header}</p>
+            <p className="truncate text-xs text-muted-foreground">{gazette.subheader}</p>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'theme',
+      header: 'Theme',
+      cell: ({ row }) => {
+        const theme = row.original.theme
+        return (
+          <div className="max-w-[150px]">
+            <Badge variant="outline" className="text-xs">
+              {theme}
+            </Badge>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: 'tags',
+      header: 'Tags',
+      cell: ({ row }) => {
+        const tags = row.original.tags || []
+        return <TagsPreview tags={tags} />
+      },
+    },
+    {
+      accessorKey: 'labels',
+      header: 'Labels',
+      size: 150,
+      cell: ({ row }) => {
+        const isValidLabels: boolean =
+          row.original.labels !== null && Object.keys(row.original.labels).length > 0
+
+        return (
+          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
+        )
+      },
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Created',
+      size: 130,
+      cell: ({ row }) => {
+        return <span className="text-sm">{format(row.original.created_at, 'PPpp')}</span>
+      },
+    },
+    {
+      accessorKey: 'updated_at',
+      header: 'Updated',
+      size: 130,
+      cell: ({ row }) => {
+        return <span className="text-sm">{format(row.original.updated_at, 'PPpp')}</span>
+      },
+    },
+    {
       accessorKey: 'id',
-      header: '',
+      header: 'action',
       size: 5,
       cell: ({ row }) => {
         const gazette = row.original
@@ -104,8 +186,8 @@ export default function ProjectGazettesPage() {
         return (
           <Popover>
             <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
+              <Button size="icon" variant="outline">
+                <Ellipsis />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="start" side="right" className="w-44 p-2">
@@ -151,93 +233,9 @@ export default function ProjectGazettesPage() {
         )
       },
     },
-    {
-      accessorKey: 'name',
-      header: 'Name',
-      cell: ({ row }) => {
-        const gazette = row.original
-        return (
-          <div className="max-w-[200px]">
-            <Link
-              to={`/projects/${params.project_id}/gazettes/${gazette.id}`}
-              className="button-link">
-              <p className="truncate">{gazette.name}</p>
-            </Link>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'header',
-      header: 'Header',
-      cell: ({ row }) => {
-        const gazette = row.original
-        return (
-          <div className="flex items-center gap-2">
-            <div className="max-w-[300px]">
-              <p className="truncate font-semibold">{gazette.header}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {gazette.subheader}
-              </p>
-            </div>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'theme',
-      header: 'Theme',
-      cell: ({ row }) => {
-        const theme = row.original.theme
-        return (
-          <div className="max-w-[150px]">
-            <Badge variant="outline" className="text-xs">
-              {theme}
-            </Badge>
-          </div>
-        )
-      },
-    },
-    {
-      accessorKey: 'tags',
-      header: 'Tags',
-      cell: ({ row }) => {
-        const tags = row.original.tags || []
-        return <TagsPreview tags={tags} />
-      },
-    },
-    {
-      accessorKey: 'labels',
-      header: 'Labels',
-      size: 150,
-      cell: ({ row }) => {
-        const isValidLabels: boolean =
-          row.original.labels !== null && Object.keys(row.original.labels).length > 0
-
-        return (
-          isValidLabels && <LabelTooltip labels={Object.entries(row.original.labels)} />
-        )
-      },
-    },
-    {
-      accessorKey: 'created_at',
-      header: 'Created',
-      size: 130,
-      cell: ({ row }) => {
-        return <DatePreview label="Created At" date={row.original.created_at} />
-      },
-    },
-    {
-      accessorKey: 'updated_at',
-      header: 'Updated',
-      size: 130,
-      cell: ({ row }) => {
-        return <DatePreview label="Updated At" date={row.original.updated_at} />
-      },
-    },
   ]
 
-  if (isLoading) return <AppPreloader />
+  if (isFirstLoading) return <AppPreloader />
 
   return (
     <div className="h-full animate-slide-up">
@@ -261,6 +259,7 @@ export default function ProjectGazettesPage() {
             size: gazettes?.size || 25,
             total: gazettes?.total || 0,
           }}
+          isLoading={isLoading}
         />
       )}
 

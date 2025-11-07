@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
 import { DataTable } from '@/components/misc/Datatable'
-import DatePreview from '@/components/misc/DatePreview'
 import ModalDelete from '@/components/misc/Dialog/DeleteConfirmation'
 import BackfillDialog from '@/components/misc/Dialog/DigestGeneratorBackfill'
+import DigestGeneratorDraft from '@/components/misc/Dialog/DigestGeneratorDraft'
 import EmptyContent from '@/components/misc/EmptyContent'
 import { TagsPreview } from '@/components/misc/TagsPreview'
 import { Badge } from '@/components/ui/badge'
@@ -20,11 +20,11 @@ import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IDigestGenerator } from '@/types/digest'
 import { IPaging } from '@/types/pagination'
+import { formatDateRangeToUTC } from '@/utils/date-format'
+import { handleFetcherData } from '@/utils/fetcher.data'
 import { ensureCanonicalPagination } from '@/utils/pagination.server'
 import { redirectWithToast } from '@/utils/toast.server'
-import { formatDateRangeToUTC } from '@/utils/date-format'
 import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import DigestGeneratorDraft from '@/components/misc/Dialog/DigestGeneratorDraft'
 import {
   Link,
   useActionData,
@@ -34,18 +34,11 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import {
-  DatabaseBackup,
-  EllipsisVertical,
-  EyeIcon,
-  Pencil,
-  Save,
-  Trash2,
-} from 'lucide-react'
+import cronstrue from 'cronstrue'
+import { format } from 'date-fns'
+import { DatabaseBackup, Ellipsis, EyeIcon, Pencil, Save, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import cronstrue from 'cronstrue'
-import { handleFetcherData } from '@/utils/fetcher.data'
 
 export function loader({ request }: LoaderFunctionArgs) {
   // This keeps pagination canonicalization consistent across routes.
@@ -71,6 +64,7 @@ export default function DigestGeneratorsPage() {
   const params = useParams()
   const navigate = useNavigate()
   const fetcher = useFetcher()
+  const [isFirstLoading, setIsFirstLoading] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [digestConfigs, setDigestConfigs] = useState<IPaging<IDigestGenerator>>()
   const [configDelete, setConfigDelete] = useState<IDigestGenerator>()
@@ -94,6 +88,7 @@ export default function DigestGeneratorsPage() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+      setIsFirstLoading(false)
     }
   }
 
@@ -127,75 +122,6 @@ export default function DigestGeneratorsPage() {
   }, [fetcher.data])
 
   const columns: ColumnDef<IDigestGenerator>[] = [
-    {
-      accessorKey: 'id',
-      header: '',
-      size: 5,
-      cell: ({ row }) => {
-        const entry = row.original
-
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="right" className="w-44 p-2">
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() =>
-                  navigate(`/projects/${params.project_id}/digest-generator/${entry.id}`)
-                }>
-                <EyeIcon />
-                <span>View</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  const url = `/projects/${params.project_id}/digest-generator/${entry.id}/edit`
-                  navigate(url)
-                }}>
-                <Pencil />
-                <span>Edit</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  setConfigDraft(entry)
-                  draftRef.current?.onOpen()
-                }}>
-                <Save />
-                <span>Draft</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  backfillRef.current?.onOpen()
-                  setConfigBackfill(entry)
-                }}>
-                <DatabaseBackup />
-                <span>Backfill</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {
-                  deleteRef.current?.onOpen()
-                  setConfigDelete(entry)
-                }}>
-                <Trash2 />
-                <span>Delete</span>
-              </Button>
-            </PopoverContent>
-          </Popover>
-        )
-      },
-    },
     {
       accessorKey: 'title',
       header: 'Title',
@@ -266,28 +192,97 @@ export default function DigestGeneratorsPage() {
     {
       accessorKey: 'created_at',
       header: 'Created',
-      size: 100,
+      size: 130,
       cell: ({ row }) => {
         const { created_at } = row.original
         const entryUtcDate = created_at + 'Z'
 
-        return <DatePreview label="Created At" date={entryUtcDate} />
+        return <span className="text-sm">{format(entryUtcDate, 'PPpp')}</span>
       },
     },
     {
       accessorKey: 'updated_at',
       header: 'Updated',
-      size: 100,
+      size: 130,
       cell: ({ row }) => {
         const { updated_at } = row.original
         const entryUtcDate = updated_at + 'Z'
 
-        return <DatePreview label="Updated At" date={entryUtcDate} />
+        return <span className="text-sm">{format(entryUtcDate, 'PPpp')}</span>
+      },
+    },
+    {
+      accessorKey: 'id',
+      header: 'action',
+      size: 5,
+      cell: ({ row }) => {
+        const entry = row.original
+
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="outline">
+                <Ellipsis />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="right" className="w-44 p-2">
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() =>
+                  navigate(`/projects/${params.project_id}/digest-generator/${entry.id}`)
+                }>
+                <EyeIcon />
+                <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  const url = `/projects/${params.project_id}/digest-generator/${entry.id}/edit`
+                  navigate(url)
+                }}>
+                <Pencil />
+                <span>Edit</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  setConfigDraft(entry)
+                  draftRef.current?.onOpen()
+                }}>
+                <Save />
+                <span>Draft</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  backfillRef.current?.onOpen()
+                  setConfigBackfill(entry)
+                }}>
+                <DatabaseBackup />
+                <span>Backfill</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setConfigDelete(entry)
+                }}>
+                <Trash2 />
+                <span>Delete</span>
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )
       },
     },
   ]
 
-  if (isLoading) return <AppPreloader />
+  if (isFirstLoading) return <AppPreloader />
 
   return (
     <div className="h-full animate-slide-up">
@@ -315,6 +310,7 @@ export default function DigestGeneratorsPage() {
             size: digestConfigs?.size || 25,
             total: digestConfigs?.total || 0,
           }}
+          isLoading={isLoading}
         />
       )}
 

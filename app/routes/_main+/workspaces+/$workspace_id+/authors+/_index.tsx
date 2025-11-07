@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AppPreloader } from '@/components/misc/AppPreloader'
-import EmptyContent from '@/components/misc/EmptyContent'
 import { DataTable } from '@/components/misc/Datatable'
-import { LabelTooltip } from '@/components/misc/LabelTooltip'
 import DeleteConfirmation from '@/components/misc/Dialog/DeleteConfirmation'
+import EmptyContent from '@/components/misc/EmptyContent'
+import { LabelTooltip } from '@/components/misc/LabelTooltip'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,11 +14,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { useApp } from '@/context/AppContext'
+import { useHandleApiError } from '@/hooks/useHandleApiError'
 import { fetchApi } from '@/libraries/fetch'
 import { IAuthor } from '@/types/author'
 import { IPaging } from '@/types/pagination'
-import { useApp } from '@/context/AppContext'
-import { useHandleApiError } from '@/hooks/useHandleApiError'
+import { ensureCanonicalPagination } from '@/utils/pagination.server'
+import { redirectWithToast } from '@/utils/toast.server'
+import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
 import {
   Link,
   useActionData,
@@ -27,11 +30,8 @@ import {
   useParams,
 } from '@remix-run/react'
 import { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVertical, EyeIcon, Edit, Trash2, Mail } from 'lucide-react'
+import { Edit, Ellipsis, EyeIcon, Mail, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node'
-import { ensureCanonicalPagination } from '@/utils/pagination.server'
-import { redirectWithToast } from '@/utils/toast.server'
 import { toast } from 'sonner'
 
 export function loader({ request }: LoaderFunctionArgs) {
@@ -57,12 +57,15 @@ export default function WorkspaceAuthors() {
   const navigate = useNavigate()
   const handleApiError = useHandleApiError()
   const { token } = useApp()
+  const [isFirstLoading, setIsFirstLoading] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [authors, setAuthors] = useState<IPaging<IAuthor>>()
   const [authorDelete, setAuthorDelete] = useState<IAuthor | null>(null)
   const deleteRef = useRef<any>(null)
 
   const fetchAuthors = async () => {
+    setIsLoading(true)
+
     try {
       const endpoint = `${apiUrl}/workspaces/${params.workspace_id}/authors`
       const data: IPaging<IAuthor> = await fetchApi(endpoint, token || '', nodeEnv, {
@@ -73,6 +76,7 @@ export default function WorkspaceAuthors() {
       handleApiError(error)
     } finally {
       setIsLoading(false)
+      setIsFirstLoading(false)
     }
   }
 
@@ -104,54 +108,6 @@ export default function WorkspaceAuthors() {
 
   const columns: ColumnDef<IAuthor>[] = [
     {
-      accessorKey: 'id',
-      header: '',
-      size: 5,
-      cell: ({ row }) => {
-        const author = row.original
-
-        return (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <EllipsisVertical />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" side="right" className="w-44 p-2">
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  navigate(`/workspaces/${params.workspace_id}/authors/${author.id}`)
-                }}>
-                <EyeIcon />
-                <span>View</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start"
-                onClick={() => {
-                  navigate(`/workspaces/${params.workspace_id}/authors/${author.id}/edit`)
-                }}>
-                <Edit />
-                <span>Edit</span>
-              </Button>
-              <Button
-                variant="ghost"
-                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
-                onClick={() => {
-                  deleteRef.current?.onOpen()
-                  setAuthorDelete(author)
-                }}>
-                <Trash2 />
-                <span>Delete</span>
-              </Button>
-            </PopoverContent>
-          </Popover>
-        )
-      },
-    },
-    {
       accessorKey: 'display_name',
       header: 'Author',
       size: 300,
@@ -173,7 +129,7 @@ export default function WorkspaceAuthors() {
               </Link>
               <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
                 <Mail className="mr-1 h-3 w-3" />
-                <span className="max-w-[200px] truncate">{author.email}</span>
+                <span className="max-w-[300px] truncate">{author.email}</span>
               </div>
             </div>
           </div>
@@ -183,6 +139,7 @@ export default function WorkspaceAuthors() {
     {
       accessorKey: 'tags',
       header: 'Tags',
+      size: 150,
       cell: ({ row }) => {
         const tags = row.original.tags || []
         const firstTag = tags[0]
@@ -243,6 +200,7 @@ export default function WorkspaceAuthors() {
     {
       accessorKey: 'meta_data',
       header: 'Metadata',
+      size: 250,
       cell: ({ row }) => {
         const isValidMetadata: boolean =
           row.original.meta_data !== null &&
@@ -258,9 +216,57 @@ export default function WorkspaceAuthors() {
         )
       },
     },
+    {
+      accessorKey: 'id',
+      header: 'action',
+      size: 5,
+      cell: ({ row }) => {
+        const author = row.original
+
+        return (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button size="icon" variant="outline">
+                <Ellipsis />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" side="right" className="w-44 p-2">
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  navigate(`/workspaces/${params.workspace_id}/authors/${author.id}`)
+                }}>
+                <EyeIcon />
+                <span>View</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start"
+                onClick={() => {
+                  navigate(`/workspaces/${params.workspace_id}/authors/${author.id}/edit`)
+                }}>
+                <Edit />
+                <span>Edit</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-start hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => {
+                  deleteRef.current?.onOpen()
+                  setAuthorDelete(author)
+                }}>
+                <Trash2 />
+                <span>Delete</span>
+              </Button>
+            </PopoverContent>
+          </Popover>
+        )
+      },
+    },
   ]
 
-  if (isLoading) {
+  if (isFirstLoading) {
     return <AppPreloader />
   }
 
@@ -270,7 +276,7 @@ export default function WorkspaceAuthors() {
         <h1 className="text-2xl font-bold dark:text-foreground">Authors</h1>
       </div>
 
-      {!isLoading && (
+      {!isFirstLoading && (
         <>
           {authors?.items.length === 0 ? (
             <EmptyContent
@@ -287,6 +293,7 @@ export default function WorkspaceAuthors() {
                 size: authors?.size || 25,
                 total: authors?.total || 0,
               }}
+              isLoading={isLoading}
             />
           )}
         </>
