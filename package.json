@@ -47,7 +47,7 @@
     "core-ui": "git+https://github.com/estate-buddy-tech/core-ui.git",
     "cronstrue": "^3.3.0",
     "cross-env": "^7.0.3",
-    "curl-generator": "^0.4.2",
+    "curl-generator": "^0.6.0",
     "date-fns": "^4.1.0",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
